@@ -15,10 +15,15 @@ $Debug      = $True
 # -----------------------------------------------------------------------------
 # Functions
 # -----------------------------------------------------------------------------
-Function Debug () { 
+Function Debug() { 
   param( [string] $Message )
   If (-Not($Debug)) { return }
   Write-Host $Message
+}
+
+# -----------------------------------------------------------------------------
+Function Is-Unix() {
+  ($PSScriptRoot)[0] -eq '/'
 }
 
 # -----------------------------------------------------------------------------
@@ -185,15 +190,15 @@ Function Create-Launcher() {
   Set-Location $AppRoot
   $AppPath  = (Get-Location)
   $Launcher = "..\PortableApps.comLauncher\PortableApps.comLauncherGenerator.exe"
-  If ($AppPath[0] -eq '/') {
-    Debug "Running Launcher: wine $Launcher $(Windows-Path AppPath)"
-    Invoke-Expression "wine $Launcher /s $(Windows-Path $AppPath)"
+  If (Is-Unix) {
+    Debug "Running Launcher: wine $Launcher $(Windows-Path $AppPath)"
+    Invoke-Expression "wine $Launcher $(Windows-Path $AppPath)"
   }
   Else {
-    Debug "Running Launcher: wine $Launcher AppPath"
+    Debug "Running Launcher: $Launcher AppPath"
     Invoke-Expression "$Launcher $AppPath"
+    Write-FileSystemCache $AppPath.Drive.Name
   }
-  Write-FileSystemCache $AppPath.Drive.Name
 }
 
 # -----------------------------------------------------------------------------
@@ -201,8 +206,8 @@ Function Create-Installer() {
   Set-Location $AppRoot
   $AppPath   = (Get-Location)
   $Installer = "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
-  If ($AppPath[0] -eq '/') {
-    Debug "Running Installer: wine $Installer $(Windows-Path AppPath)"
+  If (Is-Unix) {
+    Debug "Running Installer: wine $Installer $(Windows-Path $AppPath)"
     Invoke-Expression "wine $Installer $(Windows-Path $AppPath)"
   }
   Else {
