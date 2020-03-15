@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 # Globals 
 # -----------------------------------------------------------------------------
+$Version    = "0.0.3-alpha"
 $AppRoot    = "$PSScriptRoot\..\.."
 $AppInfoDir = "$AppRoot\App\AppInfo"
 $AppInfoIni = "$AppInfoDir\appinfo.ini"
@@ -32,32 +33,30 @@ Function Parse-Ini {
      $IniFile
   )
 
-  $IniContent = Get-Content $IniFile
-
-  $resulttable=@()
-  foreach ($line in $IniContent) {
-     Debug "Processing $line"
-     if ($line[0] -eq ";") {
+  $IniContent  = Get-Content $IniFile
+  $ResultTable = @()
+  foreach ($Line in $IniContent) {
+     Debug "Processing '$Line'"
+     If ($Line[0] -eq ";") {
        Debug "Skip comment line"
      }
-
-     elseif ($line[0] -eq "[") {
-       $Section = $line.replace("[","").replace("]","")
-       Debug "Found new section: $Section"
+     ElseIf ($Line[0] -eq "[") {
+       $Section = $Line -replace "[\[\]]", ""
+       Debug "Found new section: '$Section'"
      }
-     elseif ($line -like "*=*") {
+     ElseIf ($Line -like "*=*") {
        Debug "Found Keyline"
-         $resulttable += @{
+         $ResultTable += @{
            Section  = $Section
-           Key      = $line.split("=")[0].Trim()
-           Value    = $line.split("=")[1].Trim()
+           Key      = $Line.split("=")[0].Trim()
+           Value    = $Line.split("=")[1].Trim()
          }
-        }
-        else {
-          Debug "Skip line"
-        }
+       }
+     Else {
+       Debug "Skip line"
+     }
   }
-  return $resulttable
+  return $ResultTable
 }
 
 # -----------------------------------------------------------------------------
@@ -95,43 +94,55 @@ Function Check-Sum {
 }
 
 # -----------------------------------------------------------------------------
-Function Download-ZIP { 
+Function Download-Release { 
   param(
     [string] $URL,
     [string] $Checksum
   )
-  $PathZip = "$PSScriptRoot\$(Url-Basename -URL $URL)"
-  If (!(Test-Path $PathZip)) {
+  $DownloadPath = "$PSScriptRoot\$(Url-Basename -URL $URL)"
+  If (!(Test-Path $DownloadPath)) {
     Debug "Downloading file from '$URL'"
-    Invoke-WebRequest -Uri $URL -OutFile $PathZip
+    Invoke-WebRequest -Uri $URL -OutFile $DownloadPath
   }
-  If (!(Check-Sum -Checksum $Checksum -File $PathZip)) {
-    Debug "Checksum of File $PathZip does not match with '$Checksum'"
+  If (!(Check-Sum -Checksum $Checksum -File $DownloadPath)) {
+    Debug "Checksum of File $DownloadPath does not match with '$Checksum'"
     Exit 1
   }
-  Debug "Downloaded ZIP file '$PathZip'"
-  return $PathZip
+  Debug "Downloaded file '$DownloadPath'"
+  return $DownloadPath
 }
 
 # -----------------------------------------------------------------------------
-Function Update-Zip {
+Function Expand-Download {
+  param(
+    [string] $ArchiveFile
+  )
+  Expand-Archive -LiteralPath $ArchiveFile `
+    -DestinationPath $PSScriptRoot -Force
+}
+
+# -----------------------------------------------------------------------------
+Function Update-Release {
   param(
     [string] $URL,
-    [string] $TargetDir,
-    [string] $ExtractDir,
+    [string] $TargetName,
+    [string] $ExtractName,
     [string] $Checksum
   )
-  $ZipFile    = $(Download-ZIP -URL $URL -Checksum $Checksum)
-  $TargetPath = "$AppRoot\App\$TargetDir"
-  Expand-Archive -LiteralPath $ZipFile -DestinationPath $PSScriptRoot -Force
+  $ReleaseFile = $(Download-Release -URL $URL -Checksum $Checksum)
+  $TargetPath = "$AppRoot\App\$TargetName"
+  Switch -regex ($ReleaseFile) {
+    '\.[Zz][Ii][Pp]$' { Expand-Download -ArchiveFile $ReleaseFile; break }
+  }
   If (Test-Path $TargetPath) {
-    Write-Output "Removing $TargetPath"
+    Debug "Removing $TargetPath"
     Remove-Item -Path $TargetPath -Force -Recurse
   }
-  Debug "Move $ExtractDir to $TargetPath"
-  Move-Item -Path $PSScriptRoot\$ExtractDir -Destination $TargetPath -Force
-  Debug "Cleanup $ZipFile"
-  Remove-Item $ZipFile
+  Move-Item -Path $PSScriptRoot\$ExtractName -Destination $TargetPath -Force
+  If (Test-Path $ReleaseFile) { 
+    Debug "Cleanup $ReleaseFile"
+    Remove-Item $ReleaseFile 
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -168,10 +179,10 @@ Function Update-Application() {
     If (-Not ($Archive.ContainsKey("URL$Position"))) {
       Break
     } 
-    Update-ZIP `
+    Update-Release `
       -URL $Archive["URL$Position"] `
-      -TargetDir $Archive["TargetDir$Position"] `
-      -ExtractDir $Archive["ExtractDir$Position"] `
+      -TargetName $Archive["TargetName$Position"] `
+      -ExtractName $Archive["ExtractName$Position"] `
       -Checksum $Archive["Checksum$Position"]
     $Position += 1
   }
