@@ -6,12 +6,123 @@
 # -----------------------------------------------------------------------------
 # Globals 
 # -----------------------------------------------------------------------------
-$Version    = "0.0.3-alpha"
-$AppRoot    = "$PSScriptRoot\..\.."
-$AppInfoDir = "$AppRoot\App\AppInfo"
-$AppInfoIni = "$AppInfoDir\appinfo.ini"
-$UpdateIni  = "$AppInfoDir\update.ini"
-$Debug      = $True
+$Version        = "0.0.6-alpha"
+$AppRoot        = "$PSScriptRoot\..\.."
+$AppInfoDir     = "$AppRoot\App\AppInfo"
+$AppInfoIni     = "$AppInfoDir\appinfo.ini"
+$UpdateIni      = "$AppInfoDir\update.ini"
+$ExtractPath    = '__Extract__'
+$Debug          = $True
+
+# -----------------------------------------------------------------------------
+# Classes
+# -----------------------------------------------------------------------------
+Class IniConfig {
+  [string] $File
+  [object] $Table
+  [bool]   $Verbose = $False
+  [bool]   $Parsed  = $False
+
+  IniConfig(
+    [string] $f
+  ) { 
+    $This.File = $f
+  }
+
+  [void] Log([string] $Message) {
+    If ($This.Verbose) {
+      Write-Host "IniConfig: $Message"
+    }
+  }
+
+  [void] Parse() {
+    If ($this.Parsed) { return }
+    $Content  = Get-Content $This.File
+    $Section  = ''
+    $This.Log($Content)
+    $This.Table = @()
+    Foreach ($Line in $Content) {
+      $This.Log("Processing '$Line'")
+      If ($Line[0] -eq ";") {
+        Debug("Skip comment line")
+      }
+      ElseIf ($Line[0] -eq "[") {
+        $Section = $Line -replace "[\[\]]", ""
+        $This.Log("Found new section: '$Section'")
+      }
+      ElseIf ($Line -like "*=*") {
+        $This.Log("Found Keyline")
+        $This.Table += @{
+          Section  = $Section
+          Key      = $Line.split("=")[0].Trim()
+          Value    = $Line.split("=")[1].Trim()
+        }
+      }
+    }
+    $This.Parsed = $True
+  }
+
+  [object] Section([string] $Key) {
+    $This.Parse()
+    $Section = @{}
+    Foreach ($Item in $This.Table) { 
+      If ($Item["Section"] -eq $Key) {
+        $Section += @{ $Item["Key"] = $Item["Value"] }
+      }
+    }
+    return $Section
+  }
+}
+# -----------------------------------------------------------------------------
+Class Download {
+  [string] $URL
+  [string] $ExtractName
+  [string] $TargetName
+  [string] $Checksum
+
+  Download(
+    [string] $u,
+    [string] $en,
+    [string] $tn,
+    [string] $c
+  ){
+    $This.URL         = $u
+    $This.ExtractName = $en
+    $This.TargetName  = $tn
+    $This.Checksum    = $c
+  }
+
+  [string] Basename() {
+    $Elements = $This.URL.split('/')
+    $Basename = $Elements[$($Elements.Length-1)]
+    return $Basename
+  }
+
+  [string] ExtractTo() { 
+    # If Extract name is empty the downloaded archive has all files 
+    # placed in the root of the archive. In that case we use the
+    # TargetName and and attach it to the script location
+    If ($This.ExtractName -eq "") {
+      return "$PSScriptRoot\$($This.TargetName)" 
+    }
+    return "$PSScriptRoot"
+  }
+
+  [string] MoveFrom() {
+    If ($This.ExtractName -eq "") {
+      return "$PSScriptRoot\$($This.TargetName)" 
+    }
+    return "$PSScriptRoot\$($This.ExtractName)"
+  }
+
+  [string] MoveTo() {
+    return "$PSScriptRoot\..\..\App\$($This.TargetName)"
+  }
+
+  [string] OutFile() {
+    return "$PSScriptRoot\$($This.Basename())" 
+  }
+}
 
 # -----------------------------------------------------------------------------
 # Functions
@@ -28,121 +139,71 @@ Function Is-Unix() {
 }
 
 # -----------------------------------------------------------------------------
-Function Parse-Ini {
-  param (
-     $IniFile
-  )
-
-  $IniContent  = Get-Content $IniFile
-  $ResultTable = @()
-  foreach ($Line in $IniContent) {
-     Debug "Processing '$Line'"
-     If ($Line[0] -eq ";") {
-       Debug "Skip comment line"
-     }
-     ElseIf ($Line[0] -eq "[") {
-       $Section = $Line -replace "[\[\]]", ""
-       Debug "Found new section: '$Section'"
-     }
-     ElseIf ($Line -like "*=*") {
-       Debug "Found Keyline"
-         $ResultTable += @{
-           Section  = $Section
-           Key      = $Line.split("=")[0].Trim()
-           Value    = $Line.split("=")[1].Trim()
-         }
-       }
-     Else {
-       Debug "Skip line"
-     }
-  }
-  return $ResultTable
-}
-
-# -----------------------------------------------------------------------------
-Function Fetch-Section() {
-  param( [string] $Key )
-  $Section = @{}
-  Foreach ($Item in $Config) { 
-    If ($Item["Section"] -eq $Key) {
-      $Section += @{ $Item["Key"] = $Item["Value"] }
-    }
-  }
-  return $Section
-} 
-
-# -----------------------------------------------------------------------------
-Function Url-Basename {
-  param(
-    [string] $URL
-  )
-  $Elements = $URL.split('/')
-  $Basename = $Elements[$($Elements.Length-1)]
-  return $Basename
-}
-
-# -----------------------------------------------------------------------------
 Function Check-Sum {
   param(
-    [string] $Checksum,
-    [string] $File
+    [object] $Download
   )
-  ($Algorithm, $Sum) = $Checksum.Split(':')
-  $Result = (Get-FileHash -Path $File -Algorithm $Algorithm).Hash
+  ($Algorithm, $Sum) = $Download.Checksum.Split(':')
+  $Result = (Get-FileHash -Path $Download.OutFile() -Algorithm $Algorithm).Hash
   Debug "Checksum of INI ($Sum) and downloaded file ($Result)"
   return ($Sum -eq $Result)
 }
 
 # -----------------------------------------------------------------------------
-Function Download-Release { 
+Function Download-File {
   param(
-    [string] $URL,
-    [string] $Checksum
+    [object] $Download
   )
-  $DownloadPath = "$PSScriptRoot\$(Url-Basename -URL $URL)"
-  If (!(Test-Path $DownloadPath)) {
-    Debug "Downloading file from '$URL'"
-    Invoke-WebRequest -Uri $URL -OutFile $DownloadPath
+  If (!(Test-Path $Download.OutFile())) {
+    Debug "Downloading file from '$($Download.URL)"
+    Invoke-WebRequest -Uri $Download.URL `
+      -OutFile "$($Download.OutFile()).part"
+    Move-Item -Path "$($Download.OutFile()).part" `
+      -Destination $Download.OutFile() 
   }
-  If (!(Check-Sum -Checksum $Checksum -File $DownloadPath)) {
+  If (!(Check-Sum -Download $Download)) {
     Debug "Checksum of File $DownloadPath does not match with '$Checksum'"
     Exit 1
   }
-  Debug "Downloaded file '$DownloadPath'"
-  return $DownloadPath
+  Debug "Downloaded file '$($Download.OutFile())'"
 }
 
 # -----------------------------------------------------------------------------
 Function Expand-Download {
   param(
-    [string] $ArchiveFile
+    [object] $Download
   )
-  Expand-Archive -LiteralPath $ArchiveFile `
-    -DestinationPath $PSScriptRoot -Force
+  If (!(Test-Path $Download.ExtractTo())) {
+    New-Item -Path $Download.ExtractTo() -Type "directory" 
+  }
+  Expand-Archive -LiteralPath $Download.OutFile() `
+    -DestinationPath $Download.ExtractTo() -Force
 }
 
 # -----------------------------------------------------------------------------
 Function Update-Release {
   param(
-    [string] $URL,
-    [string] $TargetName,
-    [string] $ExtractName,
-    [string] $Checksum
+    [object] $Download
   )
-  $ReleaseFile = $(Download-Release -URL $URL -Checksum $Checksum)
-  $TargetPath = "$AppRoot\App\$TargetName"
-  Switch -regex ($ReleaseFile) {
-    '\.[Zz][Ii][Pp]$' { Expand-Download -ArchiveFile $ReleaseFile; break }
+  Switch -regex ($Download.Basename()) {
+    '\.[Zz][Ii][Pp]$' {
+      Expand-Download -Download $Download
+      break 
+    }
   }
-  If (Test-Path $TargetPath) {
-    Debug "Removing $TargetPath"
-    Remove-Item -Path $TargetPath -Force -Recurse
+  If (Test-Path $Download.MoveTo()) {
+    Debug "Removing $($Download.MoveTo())"
+    Remove-Item -Path $Download.MoveTo() `
+      -Force `
+      -Recurse
   }
-  Move-Item -Path $PSScriptRoot\$ExtractName -Destination $TargetPath -Force
-  If (Test-Path $ReleaseFile) { 
-    Debug "Cleanup $ReleaseFile"
-    Remove-Item $ReleaseFile 
-  }
+  Move-Item -Path $Download.MoveFrom() `
+    -Destination $Download.MoveTo() `
+    -Force
+  #If (Test-Path $Download.OutFile()) {
+  #  Debug "Cleanup $($Download.OutFile())"
+  #  Remove-Item $Download.OutFile()
+  #}
 }
 
 # -----------------------------------------------------------------------------
@@ -153,6 +214,7 @@ Function Update-Appinfo-Item() {
     [string] $Replace
   )
   If (Test-Path $IniFile) {
+    Debug "Updating INI File $IniFile with $Match -> $Replace" 
     $Content = (Get-Content $IniFile)
     $Content -replace $Match, $Replace | Out-File -FilePath $IniFile
   }
@@ -160,7 +222,7 @@ Function Update-Appinfo-Item() {
 
 # -----------------------------------------------------------------------------
 Function Update-Appinfo() {
-  $Version = (Fetch-Section "Version")
+  $Version = $Config.Section("Version")
   Update-Appinfo-Item `
     -IniFile $AppInfoIni `
     -Match '^PackageVersion\s*=.*' `
@@ -173,17 +235,20 @@ Function Update-Appinfo() {
 
 # -----------------------------------------------------------------------------
 Function Update-Application() {
-  $Archive = (Fetch-Section 'Archive')
+  $Archive = $Config.Section('Archive')
   $Position = 1
   While ($True) {
     If (-Not ($Archive.ContainsKey("URL$Position"))) {
       Break
-    } 
-    Update-Release `
-      -URL $Archive["URL$Position"] `
-      -TargetName $Archive["TargetName$Position"] `
-      -ExtractName $Archive["ExtractName$Position"] `
-      -Checksum $Archive["Checksum$Position"]
+    }
+    $Download  = [Download]::new(
+      $Archive["URL$Position"], 
+      $Archive["ExtractName$Position"],
+      $Archive["TargetName$Position"], 
+      $Archive["Checksum$Position"]
+    )
+    Download-File -Download $Download 
+    Update-Release -Download $Download
     $Position += 1
   }
 }
@@ -234,7 +299,7 @@ Function Create-Installer() {
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
-$Config = (Parse-Ini $UpdateIni)
+$Config = [IniConfig]::new($UpdateIni)
 Update-Application
 Update-Appinfo
 Create-Launcher
