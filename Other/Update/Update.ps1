@@ -404,7 +404,7 @@ Function Invoke-Helper() {
     Debug info "Run PA Command '$Command $AppPath'"
     & "$Command" "$AppPath"
     Debug info "Waiting for $Basename with PID $((Get-Process $Basename).id) to finish"
-    Wait-Process -Name "$Basename" -Timeout $Timeout
+    #Wait-Process -Name "$Basename" -Timeout $Timeout
   }
 }
 
