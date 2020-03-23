@@ -136,11 +136,11 @@ Function Debug() {
   $Color = 'White'
   $Severity = $Severity.ToUpper()
   Switch ($Severity) {
-    'INFO'  { $Color = 'Green';  break }
-    'WARN'  { $Color = 'Yellow'; break }
-    'ERROR' { $Color = 'Orange'; break }
-    'FATAL' { $Color = 'Red';    break }
-    default { $Color = 'White';  break }
+    'INFO'  { $Color = 'Green';      break }
+    'WARN'  { $Color = 'Yellow';     break }
+    'ERROR' { $Color = 'DarkYellow'; break }
+    'FATAL' { $Color = 'Red';        break }
+    default { $Color = 'White';      break }
   }
   If (-Not($Debug)) { return }
   Write-Host "$(Get-Date -Format u) - " -NoNewline
