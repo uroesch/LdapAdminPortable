@@ -384,10 +384,13 @@ Function Invoke-Helper() {
 
   Set-Location $AppRoot
   $AppPath   = (Get-Location)
+  $Basename  = (Get-Item $Command).Basename
 
   If (Is-Unix) {
     Debug info "Run PA Command: wine $Command $(Windows-Path $AppPath)"
-    Start-Process -Wait -FilePath "wine" -ArgumentList "$Command $AppPath"
+    Invoke-Expression "wine $Command $(Windows-Path $AppPath)"
+    Debug info "Waiting for $Basename to finish"
+    Wait-Process -name "$Basename"
   }
   Else {
     # Windows seems to need a bit of break before
@@ -398,7 +401,9 @@ Function Invoke-Helper() {
       Sleep $Sleep
     }
     Debug info "Run PA Command '$Command $AppPath'"
-    Start-Process -Wait -FilePath "$Command" -ArgumentList "$AppPath"
+    Invoke-Expression "$Command $AppPath"
+    Debug info "Waiting for $Basename to finish"
+    Wait-Process -name "$Basename"
   }
 }
 
