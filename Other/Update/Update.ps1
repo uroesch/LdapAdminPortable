@@ -433,6 +433,18 @@ Function Run-Launcher() {
   Debug info "AppPath: $AppPath"
   Debug info "Make NSIS: $MakeNsis"
 
+  If (Test-Path $LauncherDir) {
+    Debug error "Could not find LauncherDir at $LauncherDir"
+  }
+
+  If (Test-Path "$LauncherDir\App") {
+    Debug error "Could not find LauncherDir at $LauncherDir\App"
+  }
+
+  If (Test-Path "$LauncherDir\App\NSIS") {
+    Debug error "Could not find LauncherDir at $LauncherDir\App\NSIS"
+  }
+
   If (Test-Path $MakeNsis) {
     Debug error "Could not find makensis at $MakeNsis"
   }
