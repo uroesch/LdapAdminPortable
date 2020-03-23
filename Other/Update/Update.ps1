@@ -389,7 +389,7 @@ Function Invoke-Helper() {
 
   If (Is-Unix) {
     Debug info "Run PA Command: wine $Command $(Windows-Path $AppPath)"
-    Invoke-Expression "wine $Command $(Windows-Path $AppPath)"
+    & "wine" "$Command" "$(Windows-Path $AppPath)"
     Debug info "Waiting for $Basename to finish"
     Wait-Process -name "$Basename"
   }
@@ -402,8 +402,8 @@ Function Invoke-Helper() {
       Sleep $Sleep
     }
     Debug info "Run PA Command '$Command $AppPath'"
-    Invoke-Expression "$Command $AppPath"
-    Debug info "Waiting for $Basename to finish"
+    & "$Command" "$AppPath"
+    Debug info "Waiting for $Basename with PID $((Get-Process $Basename).id) to finish"
     Wait-Process -Name "$Basename" -Timeout $Timeout
   }
 }
