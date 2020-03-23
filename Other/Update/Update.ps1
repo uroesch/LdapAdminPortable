@@ -430,7 +430,7 @@ Function Run-Launcher() {
     $AppIcon = "$AppPath\App\AppInfo\appicon.ico"
   }
 
-  Debug info "Run NSIS for Name $Name, AppID $AppId, AppIcon ${AppIcon}" 
+  Debug info "Run NSIS '$MakeNsis' for Name '$Name', AppID '$AppId', AppIcon '$AppIcon'" 
 
   & "$MakeNsis" `
     /O"$LogFile" `
@@ -438,7 +438,7 @@ Function Run-Launcher() {
     /DNamePortable="$Name" `
     /DAppID="$AppId" `
     /DAppIcon="$AppIcon" `
-    "$Script"
+    "$Script" 2>&1
 }
 
 # -----------------------------------------------------------------------------
