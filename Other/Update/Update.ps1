@@ -429,23 +429,14 @@ Function Run-Launcher() {
   If (!($AppIcon)) {
     $AppIcon = "$AppPath\App\AppInfo\appicon.ico"
   }
-  $Command = "$MakeNsis " +
-    "/O$LogFile " +
-    "/DPACKAGE=$AppPath " +
-    "/DNamePortable=$Name " + 
-    "/DAppID=$AppId " + 
-    "/DAppIcon=$AppIcon " +
-    "$Script"
-  Debug info "Run '$Command'"
-  Invoke-Expression "$Command"
-
-  #& "$MakeNsis" `
-  #  /O"$LogFile" `
-  #  /DPACKAGE="$AppPath" `
-  #  /DNamePortable="$Name" `
-  #  /DAppID="$AppId" `
-  #  /DAppIcon="$AppIcon" `
-  #  "$Script" 
+  Debug info "Run Launcher for $AppId"
+  & "$MakeNsis" `
+    /O"$LogFile" `
+    /DPACKAGE="$AppPath" `
+    /DNamePortable="$Name" `
+    /DAppID="$AppId" `
+    /DAppIcon="$AppIcon" `
+    "$Script" 
 }
 
 # -----------------------------------------------------------------------------

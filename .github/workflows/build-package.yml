@@ -1,4 +1,5 @@
 # This is a test workflow
+# Giving up on windows - works locally but not github!!??!!
 name: build-package
 
 on:
@@ -11,8 +12,11 @@ on:
 
 jobs:
   build-package:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
+    - name: Install Wine
+      shell: bash
+      run: apt-get -y install wine wine64
     - name: Checkout PortableApps.comInstaller
       uses: actions/checkout@v2
       with: 
@@ -32,6 +36,7 @@ jobs:
       with:
         path: LdapAdminPortable
     - name: Run Update.ps1
+      shell: pwsh
       run: LdapAdminPortable/Other/Update/Update.ps1
       #    - name: Archive LdapAdminPortable as Zip
       #uses: thedoctor0/zip-release@master
