@@ -430,6 +430,13 @@ Function Run-Launcher() {
     $AppIcon = "$AppPath\App\AppInfo\appicon.ico"
   }
 
+  Debug info "AppPath: $AppPath"
+  Debug info "Make NSIS: $MakeNsis"
+
+  If (Test-Path $MakeNsis) {
+    Debug error "Could not find makensis at $MakeNsis"
+  }
+
   Debug info "Run NSIS '$MakeNsis' for Name '$Name', AppID '$AppId', AppIcon '$AppIcon'" 
 
   & "$MakeNsis" `
