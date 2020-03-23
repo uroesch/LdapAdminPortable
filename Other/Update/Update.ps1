@@ -353,9 +353,9 @@ Function Windows-Path() {
 Function Create-Launcher() {
   Set-Location $AppRoot
   $AppPath  = (Get-Location)
+  $Details  = $AppInfo.Section("Details")
   Try {
-    Invoke-Helper -Command `
-      "..\PortableApps.comLauncher\PortableApps.comLauncherGenerator.exe"
+    Run-Launcher -Name $Details["Name"] -AppId $Details["AppID"]
   }
   Catch {
     Debug fatal "Unable to create PortableApps Launcher"
@@ -408,12 +408,45 @@ Function Invoke-Helper() {
   }
 }
 
+
+# -----------------------------------------------------------------------------
+Function Run-Launcher() { 
+  param(
+    [string] $Name,
+    [string] $AppId,
+    [string] $AppIcon = $Null
+  )
+
+  $LauncherDir = "..\PortableApps.comLauncher"
+  $MakeNsis    = "$LauncherDir\App\NSIS\makensis.exe"
+  $Script      = "$LauncherDir\Other\Source\PortableApps.comLauncher.nsi"
+  $LogFile     = "$AppInfoDir\pac_launcher.log"
+
+  Set-Location $AppRoot
+  $AppPath   = (Get-Location)
+   
+  If (!($AppIcon)) {
+    $AppIcon = "$AppPath\App\AppInfo\appicon.ico"
+  }
+
+  Debug info "Run NSIS for Name $Name, AppID $AppId, AppIcon ${AppIcon}" 
+
+  & "$MakeNsis" `
+    /O"$LogFile" `
+    /DPACKAGE="$AppPath" `
+    /DNamePortable="$Name" `
+    /DAppID="$AppId" `
+    /DAppIcon="$AppIcon" `
+    "$Script"
+}
+
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
-$Config = [IniConfig]::new($UpdateIni)
+$Config  = [IniConfig]::new($UpdateIni)
+$AppInfo = [IniConfig]::new($AppInfoIni)
 Update-Application
 Update-Appinfo
 Postinstall
 Create-Launcher
-Create-Installer
+#Create-Installer

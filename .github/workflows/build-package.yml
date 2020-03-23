@@ -33,7 +33,12 @@ jobs:
         path: LdapAdminPortable
     - name: Run Update.ps1
       run: LdapAdminPortable/Other/Update/Update.ps1
-    - name: Download PAF installer
-      uses: actions/download-artifact@v1.0.0
+    - name: Archive LdapAdminPortable as Zip
+      uses: thedoctor0/zip-release@master
       with:
-        name: LdapAdminPortable_*.paf.exe
+        filename: 'LdapAdminPortable.zip'
+        exclusions: '*.git* Download'
+    - name: Upload LdapAdminPortable Zip
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: LdapAdminPortable.zip
