@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version        = "0.0.12-alpha"
+$Version        = "0.0.13-alpha"
 $AppRoot        = "$PSScriptRoot\..\.."
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
@@ -387,7 +387,7 @@ Function Invoke-Helper() {
 
   If (Is-Unix) {
     Debug info "Run PA Command: wine $Command $(Windows-Path $AppPath)"
-    Invoke-Expression "wine $Command $(Windows-Path $AppPath)"
+    Start-Process -Wait -FilePath "wine" -ArgumentList "$Command $AppPath"
   }
   Else {
     # Windows seems to need a bit of break before
@@ -398,7 +398,7 @@ Function Invoke-Helper() {
       Sleep $Sleep
     }
     Debug info "Run PA Command '$Command $AppPath'"
-    Invoke-Expression "$Command $AppPath"
+    Start-Process -Wait -FilePath "$Command" -ArgumentList "$AppPath"
   }
 }
 
