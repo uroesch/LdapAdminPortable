@@ -1,0 +1,35 @@
+# This is a test workflow
+name: build-package
+
+on:
+  push:
+    branches: 
+    - release/*
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  build-package:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout PortableApps.comInstaller
+      uses: actions/checkout@v2
+      with: 
+        repository: uroesch/PortableApps.comInstaller
+        path: PortableApps.comInstaller
+        ref: master
+        lfs: true
+    - name: Checkout PortableApps.comLauncher
+      uses: actions/checkout@v2
+      with: 
+        repository: uroesch/PortableApps.comLauncher
+        path: PortableApps.comLauncher
+        ref: patched
+        lfs: true
+    - name: Checkout LdapAdminPortable
+      uses: actions/checkout@v2
+      with:
+        path: LdapAdminPortable
+    - name: Run Update.ps1
+      run: LdapAdminPortable/Other/Update/Update.ps1

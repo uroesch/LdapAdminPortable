@@ -1,5 +1,4 @@
 *.exe
 Data/
 App/*.exe
-!Other/Update/*.ps1
-Other/Update/*
+Download
