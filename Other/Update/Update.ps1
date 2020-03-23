@@ -359,6 +359,7 @@ Function Create-Launcher() {
   }
   Catch {
     Debug fatal "Unable to create PortableApps Launcher"
+    Debug fatal $_
     Exit 21
   }
 }
