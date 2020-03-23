@@ -14,7 +14,7 @@ jobs:
   build-package:
     runs-on: ubuntu-latest
     steps:
-    - name: Install WineHQ 
+    - name: Install WineHQ repo
       shell: bash
       run: |
         sudo dpkg --add-architecture i386
@@ -22,8 +22,12 @@ jobs:
         sudo apt-key add winehq.key 
         sudo apt-add-repository \
         'deb https://dl.winehq.org/wine-builds/ubuntu/ bionic main'
-        sudo apt update
-        sudo apt install --install-recommends winehq-stable
+        sudo apt-get update
+    - name: Install Wine ~ hick ~
+      shell: bash
+      run: |
+        sudo apt-get -y install --install-recommends wine-stable
+        sudo apt-get -y install --install-recommends winehq-stable
     - name: Checkout PortableApps.comInstaller
       uses: actions/checkout@v2
       with: 
