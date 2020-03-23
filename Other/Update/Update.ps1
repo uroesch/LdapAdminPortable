@@ -366,7 +366,7 @@ Function Create-Launcher() {
 # -----------------------------------------------------------------------------
 Function Create-Installer() {
   Try {
-    Invoke-Helper -Sleep 5 -Command `
+    Invoke-Helper -Sleep 5 -Timeout 300 -Command `
       "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
   }
   Catch {
@@ -379,6 +379,7 @@ Function Create-Installer() {
 Function Invoke-Helper() {
   param(
     [string] $Command,
+    [int]    $Timeout = 30,
     [int]    $Sleep = $Null
   )
 
@@ -403,7 +404,7 @@ Function Invoke-Helper() {
     Debug info "Run PA Command '$Command $AppPath'"
     Invoke-Expression "$Command $AppPath"
     Debug info "Waiting for $Basename to finish"
-    Wait-Process -name "$Basename"
+    Wait-Process -Name "$Basename" -Timeout $Timeout
   }
 }
 
