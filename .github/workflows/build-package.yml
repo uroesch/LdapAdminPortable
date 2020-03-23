@@ -39,6 +39,7 @@ jobs:
     - name: Install Wine ~ hick hick ~
       shell: bash
       run: |
+        sudo apt-get -y install --install-recommends wine-stable-i386 wine-stable-amd64
         sudo apt-get -y install --install-recommends wine-stable
         sudo apt-get -y install --install-recommends winehq-stable
     - name: Checkout PortableApps.comInstaller
