@@ -16,7 +16,7 @@ jobs:
     steps:
     - name: Install Wine
       shell: bash
-      run: sudo apt-get -y install wine-stable 
+      run: sudo apt-get -y install wine-stable wine32
     - name: Checkout PortableApps.comInstaller
       uses: actions/checkout@v2
       with: 
