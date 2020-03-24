@@ -1,0 +1,71 @@
+# Build workflow for portable apps
+name: build-package
+
+on:
+  push:
+    branches: 
+    - release/*
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  build-package:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    env:
+      DISPLAY: ':7777'
+
+    steps:
+    - name: Install Wine ~ hick ~
+      shell: bash
+      run: >
+        sudo dpkg --add-architecture i386 &&
+        sudo apt-get update &&
+        sudo apt-get -y install wine32
+
+    - name: Install Virtual Frame Buffer
+      shell: bash
+      run: sudo apt-get -y install xvfb
+
+    - name: Download and install PortableApps.comInstaller
+      shell: bash
+      run: |
+        curl --location -o ../PortableApps.comInstaller.exe \
+        'https://portableapps.com/redirect/?a=PortableApps.comInstaller&s=s&d=pa&f=PortableApps.comInstaller_3.5.16.paf.exe'
+        7z x -y -o../PortableApps.comInstaller ../PortableApps.comInstaller.exe
+
+    - name: Download and install PortableApps.comLauncher
+      shell: bash
+      run: |
+        curl --location -o ../PortableApps.comLauncher.exe \
+        'https://portableapps.com/redirect/?a=PortableApps.comLauncher&s=s&d=pa&f=PortableApps.comLauncher_2.2.2.paf.exe'
+        7z x -y -o../PortableApps.comLauncher ../PortableApps.comLauncher.exe
+     
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        lfs: true
+
+    - name: Start Virtual Frame Buffer
+      shell: bash
+      run: Xvfb ${DISPLAY} -ac &
+
+    - name: Run build script Update.ps1
+      shell: pwsh
+      run: Other/Update/Update.ps1
+      timeout-minutes: 10
+
+    - name: Collect logs on failure
+      if: failure()
+      shell: bash
+      run: |
+        mkdir ../artifacts
+        cp ../PortableApps.com*/Data/*Log.txt ../artifacts
+
+    - name: Upload artifacts on failure
+      if: failure()
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: logs.zip
+        path: ../artifacts

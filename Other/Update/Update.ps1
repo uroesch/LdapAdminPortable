@@ -7,7 +7,7 @@
 # Globals
 # -----------------------------------------------------------------------------
 $Version        = "0.0.13-alpha"
-$AppRoot        = "$PSScriptRoot\..\.."
+$AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
 $AppInfoIni     = "$AppInfoDir\appinfo.ini"
@@ -79,7 +79,8 @@ Class Download {
   [string] $ExtractName
   [string] $TargetName
   [string] $Checksum
-  [string] $DownloadDir = "$PSScriptRoot\..\..\Download"
+  [string] $AppRoot     = $(Convert-Path "$PSScriptRoot\..\..")
+  [string] $DownloadDir = $(Fix-Path "$($This.AppRoot)\Download")
 
   Download(
     [string] $u,
@@ -104,24 +105,25 @@ Class Download {
     # placed in the root of the archive. In that case we use the
     # TargetName and and attach it to the script location
     If ($This.ExtractName -eq "") {
-      return "$($This.DownloadDir)\$($This.TargetName)"
+      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
     }
+    Debug info $This.DownloadDir
     return $This.DownloadDir
   }
 
   [string] MoveFrom() {
     If ($This.ExtractName -eq "") {
-      return "$($This.DownloadDir)\$($This.TargetName)"
+      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
     }
-    return "$($This.DownloadDir)\$($This.ExtractName)"
+    return $(Fix-Path "$($This.DownloadDir)\$($This.ExtractName)")
   }
 
   [string] MoveTo() {
-    return "$PSScriptRoot\..\..\App\$($This.TargetName)"
+    return $(Fix-Path "$($This.AppRoot)\App\$($This.TargetName)")
   }
 
   [string] OutFile() {
-    return "$($This.DownloadDir)\$($This.Basename())"
+    return $(Fix-Path "$($This.DownloadDir)\$($This.Basename())")
   }
 }
 
@@ -145,7 +147,7 @@ Function Debug() {
   If (-Not($Debug)) { return }
   Write-Host "$(Get-Date -Format u) - " -NoNewline
   Write-Host $Severity": " -NoNewline -ForegroundColor $Color
-  Write-Host $Message.Replace("$AppRoot\", '')
+  Write-Host $Message.Replace($(Fix-Path "$AppRoot\"), '')
 }
 
 # -----------------------------------------------------------------------------
@@ -293,6 +295,7 @@ Function Update-Appinfo-Item() {
     [string] $Match,
     [string] $Replace
   )
+  $IniFile = $(Fix-Path $IniFile)
   If (Test-Path $IniFile) {
     Debug info "Update INI File $IniFile with $Match -> $Replace"
     $Content = (Get-Content $IniFile)
@@ -341,6 +344,26 @@ Function Postinstall() {
     . $Postinstall
   }
 }
+
+# -----------------------------------------------------------------------------
+Function Fix-Path() {
+  # Convert Path only Works on Existing Directories :(
+  param( [string] $Path )
+  Switch (Is-Unix) {
+    $True { 
+      $From = '\'
+      $To   = '/'
+      break;
+    }
+    default {
+      $From = '/'
+      $To   = '\'
+    }
+  }
+  $Path = $Path.Replace($From, $To)
+  return $Path
+}
+
 # -----------------------------------------------------------------------------
 Function Windows-Path() {
   param( [string] $Path )
@@ -353,13 +376,12 @@ Function Windows-Path() {
 Function Create-Launcher() {
   Set-Location $AppRoot
   $AppPath  = (Get-Location)
-  $Details  = $AppInfo.Section("Details")
   Try {
-    Run-Launcher -Name $Details["Name"] -AppId $Details["AppID"]
+    Invoke-Helper -Command `
+      "..\PortableApps.comLauncher\PortableApps.comLauncherGenerator.exe"
   }
   Catch {
     Debug fatal "Unable to create PortableApps Launcher"
-    Debug fatal $_
     Exit 21
   }
 }
@@ -367,11 +389,12 @@ Function Create-Launcher() {
 # -----------------------------------------------------------------------------
 Function Create-Installer() {
   Try {
-    Invoke-Helper -Sleep 5 -Timeout 300 -Command `
+    Invoke-Helper -Sleep 5 -Command `
       "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
   }
   Catch {
     Debug fatal "Unable to create installer for PortableApps"
+    Debug fatal $_
     Exit 42
   }
 }
@@ -380,85 +403,31 @@ Function Create-Installer() {
 Function Invoke-Helper() {
   param(
     [string] $Command,
-    [int]    $Timeout = 30,
     [int]    $Sleep = $Null
   )
-
   Set-Location $AppRoot
-  $AppPath   = (Get-Location)
-  $Basename  = (Get-Item $Command).Basename
+  $AppPath = (Get-Location)
 
-  If (Is-Unix) {
-    Debug info "Run PA Command: wine $Command $(Windows-Path $AppPath)"
-    & "wine" "$Command" "$(Windows-Path $AppPath)"
-    Debug info "Waiting for $Basename to finish"
-    Wait-Process -name "$Basename"
-  }
-  Else {
-    # Windows seems to need a bit of break before
-    # writing the file completely to disk
-    Write-FileSystemCache $AppPath.Drive.Name
-    If ($Sleep) {
-      Debug info "Waiting for filsystem cache to catch up"
-      Sleep $Sleep
-    }
-    Debug info "Run PA Command '$Command $AppPath'"
-    & "$Command" "$AppPath"
-    Debug info "Waiting for $Basename with PID $((Get-Process $Basename).id) to finish"
-    #Wait-Process -Name "$Basename" -Timeout $Timeout
-  }
-}
-
-
-# -----------------------------------------------------------------------------
-Function Run-Launcher() { 
-  param(
-    [string] $Name,
-    [string] $AppId,
-    [string] $AppIcon = $Null
-  )
-
-  Set-Location $AppRoot
-  $AppPath     = (Get-Location)
-  $LauncherDir = "..\PortableApps.comLauncher"
-  $MakeNsis    = "$LauncherDir\App\NSIS\makensis.exe"
-  $Script      = "$LauncherDir\Other\Source\PortableApps.comLauncher.nsi"
-  $LogFile     = "$AppInfoDir\pac_launcher.log"
-
-   
-  If (!($AppIcon)) {
-    $AppIcon = "$AppPath\App\AppInfo\appicon.ico"
+  Switch (Is-Unix) {
+    $True   { $Prefix = 'wine'; break }
+    default { $Prefix = '' }
   }
 
-  Debug info "Run Launcher for $AppId"
-  If (Is-Unix) {
-    & "wine" `
-      "$MakeNsis" `
-      /O"$LogFile" `
-      /DPACKAGE="$AppPath" `
-      /DNamePortable="$Name" `
-      /DAppID="$AppId" `
-      /DAppIcon="$AppIcon" `
-      "$Script" 
+  If ($Sleep) {
+    Debug info "Waiting for filsystem cache to catch up"
+    Start-Sleep $Sleep
   }
-  Else {
-    & "$MakeNsis" `
-      /O"$LogFile" `
-      /DPACKAGE="$AppPath" `
-      /DNamePortable="$Name" `
-      /DAppID="$AppId" `
-      /DAppIcon="$AppIcon" `
-      "$Script" 
-  }
+
+  Debug info "Run PA Command $Prefix $(Windows-Path $Command) $(Windows-Path $AppPath)"
+  Invoke-Expression "$Prefix $(Windows-Path $Command) $(Windows-Path $AppPath)"
 }
 
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
-$Config  = [IniConfig]::new($UpdateIni)
-$AppInfo = [IniConfig]::new($AppInfoIni)
+$Config = [IniConfig]::new($UpdateIni)
 Update-Application
 Update-Appinfo
 Postinstall
 Create-Launcher
-#Create-Installer
+Create-Installer
