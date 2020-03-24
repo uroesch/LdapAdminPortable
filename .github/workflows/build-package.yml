@@ -1,10 +1,14 @@
+# -----------------------------------------------------------------------------
 # Build workflow for portable apps
+# Author: Urs Roesch https://github.com/uroesch
+# Version: 0.0.3 
+# -----------------------------------------------------------------------------
 name: build-package
 
 on:
   push:
     branches: 
-    - release/*
+    - workflow/*
   pull_request:
     branches:
     - master
