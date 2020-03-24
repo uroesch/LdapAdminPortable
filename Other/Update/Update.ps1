@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version        = "0.0.13-alpha"
+$Version        = "0.0.14-alpha"
 $AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
@@ -208,6 +208,8 @@ Function Download-File {
   param(
     [object] $Download
   )
+  # hide progress bar
+  $Global:ProgressPreference = 'silentlyContinue'
   If (!(Test-Path $Download.DownloadDir)) {
     Debug info "Create directory $($Download.DownloadDir)"
     New-Item -Path $Download.DownloadDir -Type directory | Out-Null
@@ -367,9 +369,9 @@ Function Fix-Path() {
 # -----------------------------------------------------------------------------
 Function Windows-Path() {
   param( [string] $Path )
-  $Path = $Path -replace ".*drive_(.)", '$1:'
-  $Path = $Path.Replace("/", "\")
-  return $Path
+  If (!(Is-Unix)) { return $Path }
+  $WinPath = $(Invoke-Expression "winepath --windows $Path")
+  return $WinPath
 }
 
 # -----------------------------------------------------------------------------
@@ -389,7 +391,7 @@ Function Create-Launcher() {
 # -----------------------------------------------------------------------------
 Function Create-Installer() {
   Try {
-    Invoke-Helper -Sleep 5 -Command `
+    Invoke-Helper -Sleep 5 -Timeout 300 -Command `
       "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
   }
   Catch {
@@ -403,13 +405,14 @@ Function Create-Installer() {
 Function Invoke-Helper() {
   param(
     [string] $Command,
-    [int]    $Sleep = $Null
+    [int]    $Sleep   = $Null,
+    [int]    $Timeout = 30
   )
   Set-Location $AppRoot
   $AppPath = (Get-Location)
 
   Switch (Is-Unix) {
-    $True   { $Prefix = 'wine'; break }
+    $True   { $Prefix = "timeout $Timeout wine"; break }
     default { $Prefix = '' }
   }
 
@@ -418,8 +421,11 @@ Function Invoke-Helper() {
     Start-Sleep $Sleep
   }
 
-  Debug info "Run PA Command $Prefix $(Windows-Path $Command) $(Windows-Path $AppPath)"
-  Invoke-Expression "$Prefix $(Windows-Path $Command) $(Windows-Path $AppPath)"
+  Debug info "Run PA Command $Prefix $Command $(Windows-Path $AppPath)"
+  Invoke-Expression "$Prefix $Command $(Windows-Path $AppPath)"
+  If (!(Is-Unix)) { 
+    Wait-Process -Name $(Get-Item $Command).Basename -Timeout $Timeout
+  }
 }
 
 # -----------------------------------------------------------------------------
