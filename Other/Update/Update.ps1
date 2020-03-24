@@ -6,8 +6,8 @@
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version        = "0.0.12-alpha"
-$AppRoot        = "$PSScriptRoot\..\.."
+$Version        = "0.0.14-alpha"
+$AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
 $AppInfoIni     = "$AppInfoDir\appinfo.ini"
@@ -79,7 +79,8 @@ Class Download {
   [string] $ExtractName
   [string] $TargetName
   [string] $Checksum
-  [string] $DownloadDir = "$PSScriptRoot\..\..\Download"
+  [string] $AppRoot     = $(Convert-Path "$PSScriptRoot\..\..")
+  [string] $DownloadDir = $(Fix-Path "$($This.AppRoot)\Download")
 
   Download(
     [string] $u,
@@ -104,24 +105,25 @@ Class Download {
     # placed in the root of the archive. In that case we use the
     # TargetName and and attach it to the script location
     If ($This.ExtractName -eq "") {
-      return "$($This.DownloadDir)\$($This.TargetName)"
+      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
     }
+    Debug info $This.DownloadDir
     return $This.DownloadDir
   }
 
   [string] MoveFrom() {
     If ($This.ExtractName -eq "") {
-      return "$($This.DownloadDir)\$($This.TargetName)"
+      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
     }
-    return "$($This.DownloadDir)\$($This.ExtractName)"
+    return $(Fix-Path "$($This.DownloadDir)\$($This.ExtractName)")
   }
 
   [string] MoveTo() {
-    return "$PSScriptRoot\..\..\App\$($This.TargetName)"
+    return $(Fix-Path "$($This.AppRoot)\App\$($This.TargetName)")
   }
 
   [string] OutFile() {
-    return "$($This.DownloadDir)\$($This.Basename())"
+    return $(Fix-Path "$($This.DownloadDir)\$($This.Basename())")
   }
 }
 
@@ -136,16 +138,16 @@ Function Debug() {
   $Color = 'White'
   $Severity = $Severity.ToUpper()
   Switch ($Severity) {
-    'INFO'  { $Color = 'Green';  break }
-    'WARN'  { $Color = 'Yellow'; break }
-    'ERROR' { $Color = 'Orange'; break }
-    'FATAL' { $Color = 'Red';    break }
-    default { $Color = 'White';  break }
+    'INFO'  { $Color = 'Green';      break }
+    'WARN'  { $Color = 'Yellow';     break }
+    'ERROR' { $Color = 'DarkYellow'; break }
+    'FATAL' { $Color = 'Red';        break }
+    default { $Color = 'White';      break }
   }
   If (-Not($Debug)) { return }
   Write-Host "$(Get-Date -Format u) - " -NoNewline
   Write-Host $Severity": " -NoNewline -ForegroundColor $Color
-  Write-Host $Message.Replace("$AppRoot\", '')
+  Write-Host $Message.Replace($(Fix-Path "$AppRoot\"), '')
 }
 
 # -----------------------------------------------------------------------------
@@ -206,6 +208,8 @@ Function Download-File {
   param(
     [object] $Download
   )
+  # hide progress bar
+  $Global:ProgressPreference = 'silentlyContinue'
   If (!(Test-Path $Download.DownloadDir)) {
     Debug info "Create directory $($Download.DownloadDir)"
     New-Item -Path $Download.DownloadDir -Type directory | Out-Null
@@ -293,6 +297,7 @@ Function Update-Appinfo-Item() {
     [string] $Match,
     [string] $Replace
   )
+  $IniFile = $(Fix-Path $IniFile)
   If (Test-Path $IniFile) {
     Debug info "Update INI File $IniFile with $Match -> $Replace"
     $Content = (Get-Content $IniFile)
@@ -341,12 +346,32 @@ Function Postinstall() {
     . $Postinstall
   }
 }
+
+# -----------------------------------------------------------------------------
+Function Fix-Path() {
+  # Convert Path only Works on Existing Directories :(
+  param( [string] $Path )
+  Switch (Is-Unix) {
+    $True { 
+      $From = '\'
+      $To   = '/'
+      break;
+    }
+    default {
+      $From = '/'
+      $To   = '\'
+    }
+  }
+  $Path = $Path.Replace($From, $To)
+  return $Path
+}
+
 # -----------------------------------------------------------------------------
 Function Windows-Path() {
   param( [string] $Path )
-  $Path = $Path -replace ".*drive_(.)", '$1:'
-  $Path = $Path.Replace("/", "\")
-  return $Path
+  If (!(Is-Unix)) { return $Path }
+  $WinPath = $(Invoke-Expression "winepath --windows $Path")
+  return $WinPath
 }
 
 # -----------------------------------------------------------------------------
@@ -366,11 +391,12 @@ Function Create-Launcher() {
 # -----------------------------------------------------------------------------
 Function Create-Installer() {
   Try {
-    Invoke-Helper -Sleep 5 -Command `
+    Invoke-Helper -Sleep 5 -Timeout 300 -Command `
       "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
   }
   Catch {
     Debug fatal "Unable to create installer for PortableApps"
+    Debug fatal $_
     Exit 42
   }
 }
@@ -379,26 +405,26 @@ Function Create-Installer() {
 Function Invoke-Helper() {
   param(
     [string] $Command,
-    [int]    $Sleep = $Null
+    [int]    $Sleep   = $Null,
+    [int]    $Timeout = 30
   )
-
   Set-Location $AppRoot
-  $AppPath   = (Get-Location)
+  $AppPath = (Get-Location)
 
-  If (Is-Unix) {
-    Debug info "Run PA Command: wine $Command $(Windows-Path $AppPath)"
-    Invoke-Expression "wine $Command $(Windows-Path $AppPath)"
+  Switch (Is-Unix) {
+    $True   { $Prefix = "timeout $Timeout wine"; break }
+    default { $Prefix = '' }
   }
-  Else {
-    # Windows seems to need a bit of break before
-    # writing the file completely to disk
-    Write-FileSystemCache $AppPath.Drive.Name
-    If ($Sleep) {
-      Debug info "Waiting for filsystem cache to catch up"
-      Sleep $Sleep
-    }
-    Debug info "Run PA Command '$Command $AppPath'"
-    Invoke-Expression "$Command $AppPath"
+
+  If ($Sleep) {
+    Debug info "Waiting for filsystem cache to catch up"
+    Start-Sleep $Sleep
+  }
+
+  Debug info "Run PA Command $Prefix $Command $(Windows-Path $AppPath)"
+  Invoke-Expression "$Prefix $Command $(Windows-Path $AppPath)"
+  If (!(Is-Unix)) { 
+    Wait-Process -Name $(Get-Item $Command).Basename -Timeout $Timeout
   }
 }
 
