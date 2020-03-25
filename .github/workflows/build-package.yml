@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.0.3 
+# Version: 0.0.4 
 # -----------------------------------------------------------------------------
 name: build-package
 
@@ -9,12 +9,17 @@ on:
   push:
     branches: 
     - workflow/*
+    - release/*
   pull_request:
     branches:
     - master
+    type: 
+    - opened
+    - closed
 
 jobs:
   build-package:
+    if: github.event.pull_request.closed != true
     timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
@@ -46,7 +51,7 @@ jobs:
         'https://portableapps.com/redirect/?a=PortableApps.comLauncher&s=s&d=pa&f=PortableApps.comLauncher_2.2.2.paf.exe'
         7z x -y -o../PortableApps.comLauncher ../PortableApps.comLauncher.exe
      
-    - name: Checkout repository
+    - name: Checkout repository ${{ github.repository }}
       uses: actions/checkout@v2
       with:
         lfs: true
@@ -73,3 +78,33 @@ jobs:
       with:
         name: logs.zip
         path: ../artifacts
+
+    - name: Copy release 
+      shell: bash
+      run: |
+        mkdir -p ../release
+        mv ../*.paf.exe ../release
+      
+    - name: Cache release artifact
+      id: cache-release
+      uses: actions/cache@v1
+      with:
+        path: ../release
+        key: release-${{ hashFiles('App/AppInfo/update.ini') }}
+
+  create-release:
+    runs-on: ubuntu-latest
+    if: 
+      github.event.pull_request.merged &&
+      startsWith(github.head_ref, 'release/v*')
+    steps:
+    - name: Checkout repository ${{ github.repository }}
+      uses: actions/checkout@v2
+      with:
+        lfs: true
+      
+    - name: Restore release artifact
+      uses: actions/cache@v1
+      with:
+        path: ../release
+        restore-key: release-${{ hashFiles('App/AppInfo/update.ini') }}
