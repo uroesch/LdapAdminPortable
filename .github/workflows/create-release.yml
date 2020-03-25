@@ -1,0 +1,31 @@
+# -----------------------------------------------------------------------------
+# Build workflow for portable apps
+# Author: Urs Roesch https://github.com/uroesch
+# Version: 0.0.1 
+# -----------------------------------------------------------------------------
+name: create-release
+
+on:
+  pull_request:
+    branches:
+    - master
+    type: 
+    - closed
+    tag:
+    - 'v*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged
+    steps:
+    - name: Checkout repository ${{ github.repository }}
+      uses: actions/checkout@v2
+      with:
+        lfs: true
+      
+    - name: Restore release artifact
+      uses: actions/cache@v1
+      with:
+        path: ../release
+        restore-key: release-${{ hashFiles('App/AppInfo/update.ini') }}
