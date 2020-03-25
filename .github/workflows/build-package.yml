@@ -15,11 +15,9 @@ on:
     - master
     type: 
     - opened
-    - closed
 
 jobs:
   build-package:
-    if: github.event.pull_request.closed != true
     timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
