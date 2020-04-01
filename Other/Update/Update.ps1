@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version        = "0.0.14-alpha"
+$Version        = "0.0.15-alpha"
 $AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
@@ -107,7 +107,6 @@ Class Download {
     If ($This.ExtractName -eq "") {
       return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
     }
-    Debug info $This.DownloadDir
     return $This.DownloadDir
   }
 
