@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.0.4 
+# Version: 0.1.0 
 # -----------------------------------------------------------------------------
 name: build-package
 
@@ -16,13 +16,19 @@ on:
 jobs:
   build-package:
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: 
+        - ubuntu-latest
+        - windows-latest
     env:
       DISPLAY: ':7777'
       PA_DOWNLOAD: https://sourceforge.net/projects/portableapps/files/PortableApps.com%%20%s/%s/download
 
     steps:
     - name: Install Wine ~ hick ~
+      if: runner.os == 'Linux'
       shell: bash
       run: >
         sudo dpkg --add-architecture i386 &&
@@ -30,6 +36,7 @@ jobs:
         sudo apt-get -y install wine32
 
     - name: Install Virtual Frame Buffer
+      if: runner.os == 'Linux'
       shell: bash
       run: sudo apt-get -y install xvfb
 
@@ -53,6 +60,7 @@ jobs:
         lfs: true
 
     - name: Start Virtual Frame Buffer
+      if: runner.os == 'Linux'
       shell: bash
       run: Xvfb ${DISPLAY} -ac &
 
