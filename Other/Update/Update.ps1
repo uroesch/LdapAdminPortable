@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version        = "0.0.18-alpha"
+$Version        = "0.0.19-alpha"
 $AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
@@ -285,7 +285,6 @@ Function Update-Release {
   }
   # Create destination Directory if not exist
   $MoveBaseDir = $Download.MoveTo() | Split-Path
-  Debug info $MoveBaseDir
   If (!(Test-Path $MoveBaseDir)) {
   Debug info "Create directory $MoveBaseDir prior to moving items"
     New-Item -Path $MoveBaseDir -Type "directory" | Out-Null
