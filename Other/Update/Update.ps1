@@ -4,156 +4,18 @@
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
+# Modules
+# -----------------------------------------------------------------------------
+Using module ".\PortableAppsCommon.psm1"
+
+# -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version        = "0.0.19-alpha"
-$AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
-$AppDir         = "$AppRoot\App"
-$AppInfoDir     = "$AppDir\AppInfo"
-$AppInfoIni     = "$AppInfoDir\appinfo.ini"
-$UpdateIni      = "$AppInfoDir\update.ini"
-$Debug          = $True
-
-# -----------------------------------------------------------------------------
-# Classes
-# -----------------------------------------------------------------------------
-Class IniConfig {
-  [string] $File
-  [object] $Table
-  [bool]   $Verbose = $False
-  [bool]   $Parsed  = $False
-
-  IniConfig(
-    [string] $f
-  ) {
-    $This.File = $f
-  }
-
-  [void] Log([string] $Message) {
-    If ($This.Verbose) {
-      Write-Host "IniConfig: $Message"
-    }
-  }
-
-  [void] Parse() {
-    If ($this.Parsed) { return }
-    $Content  = Get-Content $This.File
-    $Section  = ''
-    $This.Log($Content)
-    $This.Table = @()
-    Foreach ($Line in $Content) {
-      $This.Log("Processing '$Line'")
-      If ($Line[0] -eq ";") {
-        $This.Log("Skip comment line")
-      }
-      ElseIf ($Line[0] -eq "[") {
-        $Section = $Line -replace "[\[\]]", ""
-        $This.Log("Found new section: '$Section'")
-      }
-      ElseIf ($Line -like "*=*") {
-        $This.Log("Found Keyline")
-        $This.Table += @{
-          Section  = $Section
-          Key      = $Line.split("=")[0].Trim()
-          Value    = $Line.split("=")[1].Trim()
-        }
-      }
-    }
-    $This.Parsed = $True
-  }
-
-  [object] Section([string] $Key) {
-    $This.Parse()
-    $Section = @{}
-    Foreach ($Item in $This.Table) {
-      If ($Item["Section"] -eq $Key) {
-        $Section += @{ $Item["Key"] = $Item["Value"] }
-      }
-    }
-    return $Section
-  }
-}
-# -----------------------------------------------------------------------------
-Class Download {
-  [string] $URL
-  [string] $ExtractName
-  [string] $TargetName
-  [string] $Checksum
-  [string] $AppRoot     = $(Convert-Path "$PSScriptRoot\..\..")
-  [string] $DownloadDir = $(Fix-Path "$($This.AppRoot)\Download")
-
-  Download(
-    [string] $u,
-    [string] $en,
-    [string] $tn,
-    [string] $c
-  ){
-    $This.URL         = $u
-    $This.ExtractName = $en
-    $This.TargetName  = $tn
-    $This.Checksum    = $c
-  }
-
-  [string] Basename() {
-    $Elements = $This.URL.split('/')
-    $Basename = $Elements[$($Elements.Length-1)]
-    return $Basename
-  }
-
-  [string] ExtractTo() {
-    # If Extract name is empty the downloaded archive has all files
-    # placed in the root of the archive. In that case we use the
-    # TargetName and and attach it to the script location
-    If ($This.ExtractName -eq "") {
-      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
-    }
-    return $This.DownloadDir
-  }
-
-  [string] MoveFrom() {
-    If ($This.ExtractName -eq "") {
-      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
-    }
-    return $(Fix-Path "$($This.DownloadDir)\$($This.ExtractName)")
-  }
-
-  [string] MoveTo() {
-    return $(Fix-Path "$($This.AppRoot)\App\$($This.TargetName)")
-  }
-
-  [string] OutFile() {
-    return $(Fix-Path "$($This.DownloadDir)\$($This.Basename())")
-  }
-}
+$Version = "0.0.20-alpha"
+$Debug   = $True
 
 # -----------------------------------------------------------------------------
 # Functions
-# -----------------------------------------------------------------------------
-Function Debug() {
-  param(
-    [string] $Severity,
-    [string] $Message
-  )
-  $Color = 'White'
-  $Severity = $Severity.ToUpper()
-  Switch ($Severity) {
-    'INFO'  { $Color = 'Green';      break }
-    'WARN'  { $Color = 'Yellow';     break }
-    'ERROR' { $Color = 'DarkYellow'; break }
-    'FATAL' { $Color = 'Red';        break }
-    default { $Color = 'White';      break }
-  }
-  If (-Not($Debug)) { return }
-  Write-Host "$(Get-Date -Format u) - " -NoNewline
-  Write-Host $Severity": " -NoNewline -ForegroundColor $Color
-  Write-Host $Message.Replace($(Fix-Path "$AppRoot\"), '')
-}
-
-# -----------------------------------------------------------------------------
-Function Is-Unix() {
-  ($PSScriptRoot)[0] -eq '/'
-}
-
 # -----------------------------------------------------------------------------
 Function Which-7Zip() {
   $Locations = @(
@@ -161,7 +23,7 @@ Function Which-7Zip() {
     "$Env:ProgramFiles(x86)\7-Zip",
     "$AppRoot\..\7-ZipPortable\App\7-Zip"
   )
-  Switch (Is-Unix) {
+  Switch (Test-Unix) {
     $True {
       $Prefix = 'wine'
       $Binary = '7z'
@@ -196,10 +58,9 @@ Function Check-Sum {
   param(
     [object] $Download
   )
-  ($Algorithm, $Sum) = $Download.Checksum.Split(':')
-  $Result = (Get-FileHash -Path $Download.OutFile() -Algorithm $Algorithm).Hash
-  Debug info "Checksum of INI ($($Sum.ToUpper())) and download ($Result)"
-  return ($Sum.ToUpper() -eq $Result)
+  Return Compare-Checksum `
+    -Checksum $Download.Checksum `
+    -Path $Download.OutFile()
 }
 
 # -----------------------------------------------------------------------------
@@ -303,7 +164,7 @@ Function Update-Appinfo-Item() {
     [string] $Match,
     [string] $Replace
   )
-  $IniFile = $(Fix-Path $IniFile)
+  $IniFile = $(Switch-Path $IniFile)
   If (Test-Path $IniFile) {
     Debug info "Update INI File $IniFile with $Match -> $Replace"
     $Content = (Get-Content $IniFile)
@@ -354,33 +215,6 @@ Function Postinstall() {
 }
 
 # -----------------------------------------------------------------------------
-Function Fix-Path() {
-  # Convert Path only Works on Existing Directories :(
-  param( [string] $Path )
-  Switch (Is-Unix) {
-    $True {
-      $From = '\'
-      $To   = '/'
-      break;
-    }
-    default {
-      $From = '/'
-      $To   = '\'
-    }
-  }
-  $Path = $Path.Replace($From, $To)
-  return $Path
-}
-
-# -----------------------------------------------------------------------------
-Function Windows-Path() {
-  param( [string] $Path )
-  If (!(Is-Unix)) { return $Path }
-  $WinPath = $(Invoke-Expression "winepath --windows $Path")
-  return $WinPath
-}
-
-# -----------------------------------------------------------------------------
 Function Create-Launcher() {
   Set-Location $AppRoot
   $AppPath  = (Get-Location)
@@ -417,14 +251,14 @@ Function Invoke-Helper() {
   Set-Location $AppRoot
   $AppPath = (Get-Location)
 
-  Switch (Is-Unix) {
+  Switch (Test-Unix) {
     $True   {
-      $Arguments = "$Command $(Windows-Path $AppPath)"
+      $Arguments = "$Command $(ConvertTo-WindowsPath $AppPath)"
       $Command   = "wine"
       break
     }
     default {
-      $Arguments = Windows-Path $AppPath
+      $Arguments = ConvertTo-WindowsPath $AppPath
     }
   }
 
@@ -440,7 +274,7 @@ Function Invoke-Helper() {
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
-$Config = [IniConfig]::new($UpdateIni)
+$Config = Read-IniFile -IniFile $UpdateIni
 Update-Application
 Update-Appinfo
 Postinstall
