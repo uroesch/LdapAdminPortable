@@ -11,7 +11,7 @@ Using module ".\PortableAppsCommon.psm1"
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.20-alpha"
+$Version = "0.0.23-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -76,7 +76,8 @@ Function Download-File {
   }
   If (!(Test-Path $Download.OutFile())) {
     Debug info "Download URL $($Download.URL) to $($Download.OutFile()).part"
-    Invoke-WebRequest -Uri $Download.URL `
+    Invoke-WebRequest `
+      -Uri $Download.URL `
       -OutFile "$($Download.OutFile()).part"
 
     Debug info "Move file $($Download.OutFile()).part to $($Download.OutFile())"
