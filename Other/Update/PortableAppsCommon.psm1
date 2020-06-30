@@ -8,6 +8,7 @@
 # Globals
 # -----------------------------------------------------------------------------
 $AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
+$AppName        = (Get-Item $AppRoot).Basename
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
 $AppInfoIni     = "$AppInfoDir\appinfo.ini"
@@ -224,6 +225,7 @@ Export-ModuleMember -Function Compare-Checksum
 Export-ModuleMember -Function Get-Checksum
 Export-ModuleMember -Function Debug
 Export-ModuleMember -Variable AppRoot
+Export-ModuleMember -Variable AppName
 Export-ModuleMember -Variable AppDir
 Export-ModuleMember -Variable AppInfoDir
 Export-ModuleMember -Variable AppInfoIni
