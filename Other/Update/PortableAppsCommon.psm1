@@ -10,6 +10,7 @@
 $AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppName        = (Get-Item $AppRoot).Basename
 $AppDir         = "$AppRoot\App"
+$DownloadDir    = "$AppRoot\Download"
 $AppInfoDir     = "$AppDir\AppInfo"
 $AppInfoIni     = "$AppInfoDir\appinfo.ini"
 $UpdateIni      = "$AppInfoDir\update.ini"
@@ -192,13 +193,36 @@ Function Debug() {
 }
 
 # -----------------------------------------------------------------------------
+Function Download-Checksum() {
+  Param(
+    [String] $Uri
+  )
+  Try {
+    $OutFile = $DownloadDir + "\" + ($Uri.split('/'))[-1]
+    Invoke-WebRequest `
+      -Uri $Uri `
+      -OutFile $OutFile
+   $Sum = (Get-Content -Path $OutFile)
+   Return $Sum
+  }
+  Catch {
+    Debug error "Unable to download checksum from URL '$Uri'"
+    Exit 124
+  }
+}
+
+# -----------------------------------------------------------------------------
 Function Compare-Checksum {
   param(
     [string] $Path,
     [string] $Checksum
   )
 
-  ($Algorithm, $Sum) = $Checksum.Split(':')
+  ($Algorithm, $Sum) = $Checksum.Split('::')
+  If ($Sum -like 'http*') {
+    $Sum = Download-Checksum -Uri $Sum
+    $Checksum = $Algorithm + "::" + $Sum
+  }
   $Result = Get-Checksum -Path $Path -Algorithm $Algorithm
   Debug info "Checksum of INI ($($Checksum.ToUpper())) and download ($Result)"
   return ($Checksum.ToUpper() -eq $Result)
@@ -206,12 +230,12 @@ Function Compare-Checksum {
 
 # -----------------------------------------------------------------------------
 Function Get-Checksum {
-  param(
+  Param(
     [string] $Path,
     [string] $Algorithm
   )
   $Hash = (Get-FileHash -Path $Path -Algorithm $Algorithm).Hash
-  Return ($Algorithm + ":" + $Hash).ToUpper()
+  Return ($Algorithm + "::" + $Hash).ToUpper()
 }
 
 # -----------------------------------------------------------------------------

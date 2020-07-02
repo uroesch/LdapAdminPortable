@@ -11,7 +11,7 @@ Using module ".\PortableAppsCommon.psm1"
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version    = "0.0.2-alpha"
+$Version    = "0.0.3-alpha"
 $Debug      = $True
 $SiteUrl    = "https://github.com"
 $ReleaseUrl = "$SiteUrl/uroesch/$AppName/releases/"
@@ -79,24 +79,21 @@ Function Invoke-Installer() {
   param(
     [string] $Command
   )
+  Set-Location "$AppRoot\.."
+  $PARoot    = (Get-Location)
+  $Arguments = "/AUTOCLOSE=true " +
+               "/DESTINATION=""$(ConvertTo-WindowsPath $PARoot)\\"""
   #  Addtional Switches for paf.exe
   #  /HIDEINSTALLER=true
   #  /SILENT=true
 
   Switch (Test-Unix) {
     $True   {
-      Set-Location "$AppRoot\.."
-      $PARoot    = (Get-Location)
-      $Arguments = "/SILENT=true /AUTOCLOSE=true /DESTINATION=""$(ConvertTo-WindowsPath $PARoot)\\"""
       $Arguments = "$Command $Arguments"
       $Command   = "wine"
       break
     }
-    default {
-      Set-Location "$AppRoot"
-      $AppRoot    = (Get-Location)
-      $Arguments = "/AUTOCLOSE=true /DESTINATION=""$(ConvertTo-WindowsPath $AppRoot)"""
-    }
+    default { }
   }
 
   Debug info "Run PA $Command $Arguments"
