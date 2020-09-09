@@ -2,6 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
+# Version: 0.4.1
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -251,6 +252,7 @@ Export-ModuleMember -Function Debug
 Export-ModuleMember -Variable AppRoot
 Export-ModuleMember -Variable AppName
 Export-ModuleMember -Variable AppDir
+Export-ModuleMember -Variable DownloadDir
 Export-ModuleMember -Variable AppInfoDir
 Export-ModuleMember -Variable AppInfoIni
 Export-ModuleMember -Variable UpdateIni
