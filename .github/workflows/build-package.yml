@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.1.0 
+# Version: 0.1.1
 # -----------------------------------------------------------------------------
 name: build-package
 
@@ -44,7 +44,7 @@ jobs:
       shell: bash
       run: |
         curl --location -o ../PortableApps.comInstaller.exe \
-        $(printf "${PA_DOWNLOAD}" Installer PortableApps.comInstaller_3.5.16.paf.exe)
+        $(printf "${PA_DOWNLOAD}" Installer PortableApps.comInstaller_3.5.18.paf.exe)
         7z x -y -o../PortableApps.comInstaller ../PortableApps.comInstaller.exe
 
     - name: Download and install PortableApps.comLauncher
