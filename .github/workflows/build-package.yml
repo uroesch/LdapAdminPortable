@@ -1,13 +1,13 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.1.1
+# Version: 0.2.0
 # -----------------------------------------------------------------------------
 name: build-package
 
 on:
   push:
-    branches: 
+    branches:
     - workflow/*
   pull_request:
     branches:
@@ -19,14 +19,27 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: 
+        os:
         - ubuntu-latest
         - windows-latest
     env:
       DISPLAY: ':7777'
       PA_DOWNLOAD: https://sourceforge.net/projects/portableapps/files/PortableApps.com%%20%s/%s/download
+      PA_INSTALLER: 3.5.18
+      PA_LAUNCHER: 2.2.2
 
     steps:
+    - name: Cache apt directory cache
+      if: runner.os == 'Linux'
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-apt-pkgs
+      with:
+        path: /var/cache/apt/archive
+        key: build-package-${{ env.cache-name }}-${{ hashFiles('*deb') }}
+        restore-keys: |
+          build-package-${{ env.cache-name }}-
+
     - name: Install Wine ~ hick ~
       if: runner.os == 'Linux'
       shell: bash
@@ -40,20 +53,39 @@ jobs:
       shell: bash
       run: sudo apt-get -y install xvfb
 
+    - name: Cache PortableApps Infrastructure
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-pa-infra
+      with:
+        path: ~/downloads
+        key: build-package-${{ env.cache-name }}-${{ hashFiles('PortableApps.com*.exe') }}
+        restore-keys: |
+          build-package-${{ env.cache-name }}-
+
     - name: Download and install PortableApps.comInstaller
       shell: bash
       run: |
-        curl --location -o ../PortableApps.comInstaller.exe \
-        $(printf "${PA_DOWNLOAD}" Installer PortableApps.comInstaller_3.5.18.paf.exe)
-        7z x -y -o../PortableApps.comInstaller ../PortableApps.comInstaller.exe
+        name=PortableApps.comInstaller_${PA_INSTALLER}.paf.exe
+        installer=~/downloads/${name}
+        mkdir -p ~/downloads
+        test -f ${installer} ||
+        curl --location -o ${installer} \
+        $(printf "${PA_DOWNLOAD}" Installer ${name})
+        7z x -y -o../PortableApps.comInstaller ${installer}
 
     - name: Download and install PortableApps.comLauncher
       shell: bash
       run: |
-        curl --location -o ../PortableApps.comLauncher.exe \
-        $(printf "${PA_DOWNLOAD}" Launcher PortableApps.comLauncher_2.2.2.paf.exe)
-        7z x -y -o../PortableApps.comLauncher ../PortableApps.comLauncher.exe
-     
+        name=PortableApps.comInstaller_${PA_INSTALLER}.paf.exe
+        name=PortableApps.comLauncher_${PA_LAUNCHER}.paf.exe
+        installer=~/downloads/${name}
+        mkdir -p ~/downloads
+        test -f ${installer} ||
+        curl --location -o ${installer} \
+        $(printf "${PA_DOWNLOAD}" Launcher ${name})
+        7z x -y -o../PortableApps.comLauncher ${installer}
+
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
