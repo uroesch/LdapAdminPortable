@@ -1,3 +1,4 @@
+#!/usr/bin/env powershell
 # -----------------------------------------------------------------------------
 # Description: Generic Update Script for PortableApps
 # Author: Urs Roesch <github@bun.ch>
@@ -11,7 +12,7 @@ Using module ".\PortableAppsCommon.psm1"
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.23-alpha"
+$Version = "0.0.24-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -75,14 +76,20 @@ Function Download-File {
     New-Item -Path $Download.DownloadDir -Type directory | Out-Null
   }
   If (!(Test-Path $Download.OutFile())) {
-    Debug info "Download URL $($Download.URL) to $($Download.OutFile()).part"
-    Invoke-WebRequest `
-      -Uri $Download.URL `
-      -OutFile "$($Download.OutFile()).part"
+    Try {
+      Debug info "Download URL $($Download.URL) to $($Download.OutFile()).part"
+      Invoke-WebRequest `
+        -Uri $Download.URL `
+        -OutFile "$($Download.OutFile()).part"
 
-    Debug info "Move file $($Download.OutFile()).part to $($Download.OutFile())"
-    Move-Item -Path "$($Download.OutFile()).part" `
-      -Destination $Download.OutFile()
+      Debug info "Move file $($Download.OutFile()).part to $($Download.OutFile())"
+      Move-Item -Path "$($Download.OutFile()).part" `
+        -Destination $Download.OutFile()
+    }
+    Catch {
+      Debug fatal "Failed to download URL $($Download.URL)"
+      Exit 1
+    }
   }
   If (!(Check-Sum -Download $Download)) {
     Debug fatal "Checksum for $($Download.OutFile()) " `
