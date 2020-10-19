@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.3.0
+# Version: 0.5.0
 # -----------------------------------------------------------------------------
 name: build-package
 
@@ -37,9 +37,7 @@ jobs:
         cache-name: cache-apt-pkgs
       with:
         path: /var/cache/apt/archive
-        key: build-package-${{ env.cache-name }}-${{ hashFiles('*deb') }}
-        restore-keys: |
-          build-package-${{ env.cache-name }}-
+        key: build-package-${{ env.cache-name }}-${{ hashFiles('*.deb') }}
 
     - name: Install Wine ~ hick ~
       if: runner.os == 'Linux'
@@ -60,9 +58,7 @@ jobs:
         cache-name: cache-pa-infra
       with:
         path: ~/downloads
-        key: build-package-${{ env.cache-name }}-${{ hashFiles('PortableApps.com*.exe') }}
-        restore-keys: |
-          build-package-${{ env.cache-name }}-
+        key: build-package-${{ env.cache-name }}-${{ hashFiles('PortableApps.com*.paf.exe') }}
 
     - name: Download and install PortableApps.comInstaller
       shell: bash
@@ -98,8 +94,7 @@ jobs:
       run: Xvfb ${DISPLAY} -ac &
 
     - name: Run build script Update.ps1
-      shell: pwsh
-      run: Other/Update/Update.ps1
+      run: pwsh -ExecutionPolicy ByPass -File Other/Update/Update.ps1
       timeout-minutes: 10
 
     - name: Collect logs on failure
