@@ -4,15 +4,35 @@
 # Author: Urs Roesch <github@bun.ch>
 # -----------------------------------------------------------------------------
 
+<#
+.SYNOPSIS
+  Update and build a new release of a PortableApps application installer.
+
+.DESCRIPTION
+  A script to automate the tedious process of building the application
+  installers for PortableApps. 
+  The scripts does get the instructions from the custom ini file
+  located under <ApplicationRoot>/App/AppInfo/update.ini
+
+.PARAMETER UpdateChecksums
+  Updates the ini files Checksums with the one of the newly downloaded
+  upstream version.
+
+#>
+
+
 # -----------------------------------------------------------------------------
 # Modules
 # -----------------------------------------------------------------------------
 Using module ".\PortableAppsCommon.psm1"
 
+Param(
+  [Switch] $UpdateChecksums
+)
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.24-alpha"
+$Version = "0.0.25-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -59,6 +79,11 @@ Function Check-Sum {
   param(
     [object] $Download
   )
+  If ($UpdateChecksums) {
+    $Download.Checksum = Update-Checksum `
+      -Path $Download.OutFile() `
+      -Checksum $Download.Checksum
+  }
   Return Compare-Checksum `
     -Checksum $Download.Checksum `
     -Path $Download.OutFile()
