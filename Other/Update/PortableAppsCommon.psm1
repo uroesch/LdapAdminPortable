@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.4.1
+# Version: 0.5.0
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -213,6 +213,8 @@ Function Download-Checksum() {
 }
 
 # -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 Function Compare-Checksum {
   param(
     [string] $Path,
@@ -240,6 +242,21 @@ Function Get-Checksum {
 }
 
 # -----------------------------------------------------------------------------
+Function Update-Checksum {
+  Param(
+    [string] $Path,
+    [string] $Checksum
+  )
+  ($Algorithm, $Sum) = $Checksum.Split('::')
+  If ($Sum -like 'http*') { Return }
+  $NewChecksum = Get-Checksum -Path $Path -Algorithm $Algorithm
+  Get-Content -Path $UpdateIni | `
+    Foreach-Object { $_ -Replace $Checksum, $NewChecksum } | `
+    Set-Content -Path $UpdateIni
+  Return $NewChecksum 
+}
+
+# -----------------------------------------------------------------------------
 # Export
 # -----------------------------------------------------------------------------
 Export-ModuleMember -Function Read-IniFile
@@ -248,6 +265,7 @@ Export-ModuleMember -Function ConvertTo-WindowsPath
 Export-ModuleMember -Function Switch-Path
 Export-ModuleMember -Function Compare-Checksum
 Export-ModuleMember -Function Get-Checksum
+Export-ModuleMember -Function Update-Checksum
 Export-ModuleMember -Function Debug
 Export-ModuleMember -Variable AppRoot
 Export-ModuleMember -Variable AppName
