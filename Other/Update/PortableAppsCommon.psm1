@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.5.0
+# Version: 0.5.1
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -221,7 +221,8 @@ Function Compare-Checksum {
     [string] $Checksum
   )
 
-  ($Algorithm, $Sum) = $Checksum.Split('::')
+  # The somewhat involved split is here to make it compatible with win10
+  ($Algorithm, $Sum) = ($Checksum -replace '::', "`n").Split("`n")
   If ($Sum -like 'http*') {
     $Sum = Download-Checksum -Uri $Sum
     $Checksum = $Algorithm + "::" + $Sum
