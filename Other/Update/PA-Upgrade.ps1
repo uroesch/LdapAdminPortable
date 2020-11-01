@@ -11,27 +11,60 @@ Using module ".\PortableAppsCommon.psm1"
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version    = "0.0.3-alpha"
+$Version    = "0.0.4-alpha"
 $Debug      = $True
-$SiteUrl    = "https://github.com"
-$ReleaseUrl = "$SiteUrl/uroesch/$AppName/releases/"
+$RestUrl    = "https://api.github.com/repos/uroesch/{0}/releases" -f $AppName
 
 # -----------------------------------------------------------------------------
 # Functions
 # -----------------------------------------------------------------------------
-Function Fetch-InstallerLink() {
-  Debug info "Fetching installer download URL '$ReleaseUrl'"
+Function Fetch-InstalledVersion() {
   Try {
-    # Does not work on powershell 5 without basic parsing!
-    $HtmlContent   = Invoke-WebRequest -Uri $ReleaseUrl -UseBasicParsing
-    $InstallerLink = $(
-      $HtmlContent.Links |
-      Where { $_.href -like "*/download/*exe" } |
-      Select href -First 1
-    ).href
-    $InstallerLink = $SiteUrl + $InstallerLink
-    Debug info "Got installer URL '$InstallerLink'"
-    Return $InstallerLink
+    $Line    = (Get-Content -Path $AppInfoIni | Select-String 'DisplayVersion')
+    $Version = ($Line -split "=")[1]
+    If ($Version.Length -eq 0 ) { Throw }
+    Return $Version
+  }
+  Catch {
+    Debug error "Failed to parse version $AppInfoIni file"
+    exit 120
+  }
+}
+
+# -----------------------------------------------------------------------------
+Function Fetch-LatestVersion() {
+  Try {
+    $Version = (Fetch-LatestRelease).name -replace "^v", ""
+    If ($Version.Length -eq 0 ) { Throw }
+    Return $Version
+  }
+  Catch {
+    Debug error "Failed to parse github release version"
+    exit 121
+  }
+}
+
+# -----------------------------------------------------------------------------
+Function Fetch-LatestRelease() {
+  Try {
+    (Invoke-RestMethod -Uri $RestUrl)[0]
+  }
+  Catch {
+    Debug error "Failed to fetch latest release of $AppName"
+    exit 122
+  }
+}
+
+# -----------------------------------------------------------------------------
+Function Fetch-InstallerLink() {
+  Debug info "Fetching installer download URL '$RestUrl'"
+  Try {
+    (Fetch-LatestRelease).assets | ForEach-Object {
+      If ($_.name -Match "$AppName.*.paf.exe") {
+        Debug info "Download link is $($_.browser_download_url)"
+        Return $_.browser_download_url
+      }
+    }
   }
   Catch {
     Debug error "Failed to download and parse release information for $AppName"
@@ -62,16 +95,10 @@ Function Download-Release {
   }
   Catch {
     Debug error "Failed to download '$InstallerLink'"
-    Exit 123
+    Exit 125
   }
 
   Return $InstallerFile
-}
-
-# -----------------------------------------------------------------------------
-Function Install-Release() {
-  $Installer = Download-Release
-  Invoke-Installer -Command $Installer
 }
 
 # -----------------------------------------------------------------------------
@@ -101,6 +128,24 @@ Function Invoke-Installer() {
 }
 
 # -----------------------------------------------------------------------------
+Function Check-Version {
+  $CurrentVersion = Fetch-InstalledVersion
+  $LatestVersion  = Fetch-LatestVersion
+
+  If ($CurrentVersion -eq $LatestVersion) {
+    Debug info "Current version and latest release one are the same."
+    Exit 124
+  }
+}
+
+# -----------------------------------------------------------------------------
+Function Install-Release() {
+  $Installer = Download-Release
+  Invoke-Installer -Command $Installer
+}
+
+# -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
+Check-Version
 Install-Release
