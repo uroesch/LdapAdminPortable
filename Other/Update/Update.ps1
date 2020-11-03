@@ -32,7 +32,7 @@ Param(
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.29-alpha"
+$Version = "0.0.30-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -245,7 +245,7 @@ Function Create-Launcher() {
       "..\PortableApps.comLauncher\PortableApps.comLauncherGenerator.exe"
   }
   Catch {
-    Debug fatal "Unable to create PortableApps Launcher"
+    Debug fatal "Unable to create PortableApps Launcher - " + $_
     Exit 21
   }
 }
@@ -257,8 +257,7 @@ Function Create-Installer() {
       "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
   }
   Catch {
-    Debug fatal "Unable to create installer for PortableApps"
-    Debug fatal $_
+    Debug fatal "Unable to create installer for PortableApps - " + $_
     Exit 42
   }
 }
