@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.5.3
+# Version: 0.5.4
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -10,11 +10,13 @@
 # -----------------------------------------------------------------------------
 $AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppName        = (Get-Item $AppRoot).Basename
-$AppDir         = "$AppRoot\App"
-$DownloadDir    = "$AppRoot\Download"
-$AppInfoDir     = "$AppDir\AppInfo"
-$AppInfoIni     = "$AppInfoDir\appinfo.ini"
-$UpdateIni      = "$AppInfoDir\update.ini"
+$AppDir         = Join-Path $AppRoot App
+$DownloadDir    = Join-Path $AppRoot Download
+$AppInfoDir     = Join-Path $AppDir AppInfo
+$LauncherDir    = Join-Path $AppInfoDir Launcher
+$AppInfoIni     = Join-Path $AppInfoDir appinfo.ini
+$UpdateIni      = Join-Path $AppInfoDir update.ini
+$LauncherIni    = Join-Path $LauncherDir "$AppName.ini"
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -259,7 +261,7 @@ Function Update-Checksum {
   Get-Content -Path $UpdateIni | `
     Foreach-Object { $_ -Replace $Checksum, $NewChecksum } | `
     Set-Content -Path $UpdateIni
-  Return $NewChecksum 
+  Return $NewChecksum
 }
 
 # -----------------------------------------------------------------------------
@@ -278,5 +280,7 @@ Export-ModuleMember -Variable AppName
 Export-ModuleMember -Variable AppDir
 Export-ModuleMember -Variable DownloadDir
 Export-ModuleMember -Variable AppInfoDir
+Export-ModuleMember -Variable LauncherDir
 Export-ModuleMember -Variable AppInfoIni
 Export-ModuleMember -Variable UpdateIni
+Export-ModuleMember -Variable LauncherIni
