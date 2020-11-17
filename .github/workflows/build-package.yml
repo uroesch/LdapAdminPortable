@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.5.0
+# Version: 0.6.0
 # -----------------------------------------------------------------------------
 name: build-package
 
@@ -15,6 +15,7 @@ on:
 
 jobs:
   build-package:
+    if: endsWith(github.repository, 'Portable')
     timeout-minutes: 15
     runs-on: ${{ matrix.os }}
     strategy:

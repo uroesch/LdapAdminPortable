@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.5.4
+# Version: 0.6.0
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ $LauncherIni    = Join-Path $LauncherDir "$AppName.ini"
 # -----------------------------------------------------------------------------
 Class ReadIniConfig {
   [string] $File
-  [object] $Table
+  [object] $Struct
   [bool]   $Verbose = $False
   [bool]   $Parsed  = $False
 
@@ -33,33 +33,23 @@ Class ReadIniConfig {
     $This.File = $f
   }
 
-  [void] Log([string] $Message) {
-    If ($This.Verbose) {
-      Write-Host "IniConfig: $Message"
-    }
-  }
-
   [void] Parse() {
     If ($this.Parsed) { return }
     $Content  = Get-Content $This.File
     $Section  = ''
-    $This.Log($Content)
-    $This.Table = @()
+    $This.Struct = @{}
     Foreach ($Line in $Content) {
-      $This.Log("Processing '$Line'")
-      If ($Line[0] -eq ";") {
-        $This.Log("Skip comment line")
-      }
-      ElseIf ($Line[0] -eq "[") {
-        $Section = $Line -replace "[\[\]]", ""
-        $This.Log("Found new section: '$Section'")
-      }
-      ElseIf ($Line -like "*=*") {
-        $This.Log("Found Keyline")
-        $This.Table += @{
-          Section  = $Section
-          Key      = $Line.split("=")[0].Trim()
-          Value    = $Line.split("=")[1].Trim()
+      Switch -regex ($Line) {
+        "^\s*;" { 
+          Continue 
+        } 
+        "^\s*\[" { 
+          $Section = $Line -replace "[\[\]]", ""
+          $This.Struct.Add($Section.Trim(), @{})
+        }
+        ".*=.*" {
+          ($Name, $Value) = $Line.split("=")
+          $This.Struct[$Section] += @{ $Name.Trim() = $Value.Trim() }
         }
       }
     }
@@ -69,12 +59,7 @@ Class ReadIniConfig {
   [object] Section([string] $Key) {
     $This.Parse()
     $Section = @{}
-    Foreach ($Item in $This.Table) {
-      If ($Item["Section"] -eq $Key) {
-        $Section += @{ $Item["Key"] = $Item["Value"] }
-      }
-    }
-    return $Section
+    Return $This.Struct[$Key]
   }
 }
 
