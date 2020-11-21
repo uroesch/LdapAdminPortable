@@ -2,21 +2,22 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.6.0
+# Version: 0.7.0
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
-$AppName        = (Get-Item $AppRoot).Basename
-$AppDir         = Join-Path $AppRoot App
-$DownloadDir    = Join-Path $AppRoot Download
-$AppInfoDir     = Join-Path $AppDir AppInfo
-$LauncherDir    = Join-Path $AppInfoDir Launcher
-$AppInfoIni     = Join-Path $AppInfoDir appinfo.ini
-$UpdateIni      = Join-Path $AppInfoDir update.ini
-$LauncherIni    = Join-Path $LauncherDir "$AppName.ini"
+$AppRoot         = $(Convert-Path "$PSScriptRoot\..\..")
+$AppName         = (Get-Item $AppRoot).Basename
+$AppDir          = Join-Path $AppRoot App
+$DownloadDir     = Join-Path $AppRoot Download
+$AppInfoDir      = Join-Path $AppDir AppInfo
+$LauncherDir     = Join-Path $AppInfoDir Launcher
+$AppInfoIni      = Join-Path $AppInfoDir appinfo.ini
+$UpdateIni       = Join-Path $AppInfoDir update.ini
+$LauncherIni     = Join-Path $LauncherDir "$AppName.ini"
+$InfraDirDefault = $(Convert-Path "$AppRoot\..")
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -40,10 +41,10 @@ Class ReadIniConfig {
     $This.Struct = @{}
     Foreach ($Line in $Content) {
       Switch -regex ($Line) {
-        "^\s*;" { 
-          Continue 
-        } 
-        "^\s*\[" { 
+        "^\s*;" {
+          Continue
+        }
+        "^\s*\[" {
           $Section = $Line -replace "[\[\]]", ""
           $This.Struct.Add($Section.Trim(), @{})
         }
@@ -136,7 +137,7 @@ Function Test-Unix() {
 Function ConvertTo-WindowsPath() {
   param( [string] $Path )
   If (!(Test-Unix)) { return $Path }
-  $WinPath = $(Invoke-Expression "winepath --windows $Path")
+  $WinPath = & winepath --windows $Path 2>/dev/null
   Return $WinPath
 }
 
@@ -269,3 +270,4 @@ Export-ModuleMember -Variable LauncherDir
 Export-ModuleMember -Variable AppInfoIni
 Export-ModuleMember -Variable UpdateIni
 Export-ModuleMember -Variable LauncherIni
+Export-ModuleMember -Variable InfraDirDefault

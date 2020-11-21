@@ -10,7 +10,7 @@
 
 .DESCRIPTION
   A script to automate the tedious process of building the application
-  installers for PortableApps. 
+  installers for PortableApps.
   The scripts does get the instructions from the custom ini file
   located under <ApplicationRoot>/App/AppInfo/update.ini
 
@@ -18,6 +18,9 @@
   Updates the ini files Checksums with the one of the newly downloaded
   upstream version.
 
+.PARAMETER InfraDir
+  Override the default directory where the build infrastructure resides.
+  E.g the Launcher and Installer packages from PortableApps.com.
 #>
 
 
@@ -27,12 +30,13 @@
 Using module ".\PortableAppsCommon.psm1"
 
 Param(
-  [Switch] $UpdateChecksums
+  [Switch] $UpdateChecksums,
+  [String] $InfraDir = $InfraDirDefault
 )
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.30-alpha"
+$Version = "0.0.31-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -241,8 +245,10 @@ Function Create-Launcher() {
   Set-Location $AppRoot
   $AppPath  = (Get-Location)
   Try {
-    Invoke-Helper -Command `
-      "..\PortableApps.comLauncher\PortableApps.comLauncherGenerator.exe"
+    $Command = Assemble-PAExec `
+      -Name 'PortableApps.comLauncher' `
+      -Suffix 'Generator.exe'
+    Invoke-Helper -Command $Command
   }
   Catch {
     Debug fatal "Unable to create PortableApps Launcher - " + $_
@@ -253,13 +259,23 @@ Function Create-Launcher() {
 # -----------------------------------------------------------------------------
 Function Create-Installer() {
   Try {
-    Invoke-Helper -Sleep 5 -Timeout 300 -Command `
-      "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
+    $Command = Assemble-PAExec -Name 'PortableApps.comInstaller'
+    Invoke-Helper -Sleep 5 -Timeout 300 -Command $Command
   }
   Catch {
     Debug fatal "Unable to create installer for PortableApps - " + $_
     Exit 42
   }
+}
+
+# -----------------------------------------------------------------------------
+Function Assemble-PAExec() {
+  Param(
+    [String] $Name,
+    [String] $Suffix = '.exe'
+  )
+  Debug debug "InfraDir is ${InfraDir}"
+  [System.IO.Path]::Combine($InfraDir, $Name, "$Name$Suffix")
 }
 
 # -----------------------------------------------------------------------------
