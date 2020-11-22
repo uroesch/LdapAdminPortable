@@ -36,7 +36,7 @@ Param(
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.31-alpha"
+$Version = "0.0.32-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -96,9 +96,9 @@ Function Download-File {
   If (!(Test-Path $Download.OutFile())) {
     Try {
       Debug info "Download URL $($Download.URL) to $($Download.OutFile()).part"
-      Invoke-WebRequest `
-        -Uri $Download.URL `
-        -OutFile "$($Download.OutFile()).part"
+      # iwr Does not work for sourceforge.net :( so we use this construct
+      $Downloader = New-Object System.Net.WebClient
+      $Downloader.DownloadFile($Download.URL, "$($Download.OutFile()).part")
 
       Debug info "Move file $($Download.OutFile()).part to $($Download.OutFile())"
       Move-Item -Path "$($Download.OutFile()).part" `
