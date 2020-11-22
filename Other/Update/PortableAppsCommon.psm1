@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.7.0
+# Version: 0.7.1
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -86,7 +86,7 @@ Class Download {
   }
 
   [string] Basename() {
-    $Elements = $This.URL.split('/')
+    $Elements = ($This.URL.split('?'))[0].split('/')
     $Basename = $Elements[$($Elements.Length-1)]
     return $Basename
   }
@@ -144,7 +144,7 @@ Function ConvertTo-WindowsPath() {
 # -----------------------------------------------------------------------------
 Function Switch-Path() {
   # Convert Path only Works on Existing Directories :(
-  param( [string] $Path )
+  Param( [string] $Path )
   Switch (Test-Unix) {
     $True {
       $From = '\'
