@@ -40,10 +40,12 @@ This PortableApp project is in early beta stage.
 - [x] Documentation
 - [ ] Icons
 
+
+<!-- Start include INSTALL.md -->
 ## Installation
 
 The Packages found under the release page are not digitally signed so there the installation
-is a bit involved. 
+is a bit involved.
 
 After download the `.paf.exe` installer trying to install may result in a windows defender
 warning.
@@ -56,17 +58,10 @@ To unblock the installer and install the application follow the annotated screen
 
 1. Right click on the executable file.
 2. Choose `Properties` at the bottom of the menu.
-3. Check the unblock box. 
+3. Check the unblock box.
+<!-- End include INSTALL.md -->
 
-## Build
-
-### Prerequisites
-
-* [PortableApps.com Launcher](https://portableapps.com/apps/development/portableapps.com_launcher)
-* [PortableApps.com Installer](https://portableapps.com/apps/development/portableapps.com_installer)
-* [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7)
-* [Wine (Linux / MacOS only)](https://www.winehq.org/) or [Docker (Linux)](https://www.docker.com/)
-
+<!-- Start include BUILD.md -->
 ### Build
 
 #### Windows 10
@@ -78,21 +73,25 @@ repository.
 powershell -ExecutionPolicy ByPass -File Other/Update/Update.ps1
 ```
 
+#### Linux (Docker)
+
+Note: This is currently the preferred way of building.
+
+For a Docker build run the following command.
+
+```
+curl -sJL https://raw.githubusercontent.com/uroesch/PortableApps/master/scripts/docker-build.sh | bash
+```
+
 #### Linux (Wine)
 
-To build the installer under Linux with Wine and PowerShell installed run the 
+To build the installer under Linux with Wine and PowerShell installed run the
 command below.
+
 ```
 pwsh Other/Update/Update.ps1
 ```
-
-#### Linux (Docker)
-
-For a Docker build run the following command. 
-
-```
-curl -sJL https://raw.githubusercontent.com/uroesch/PortableApps/master/scripts/docker-build.sh | bash 
-```
+<!-- End include BUILD.md -->
 
 [nd]: Other/Icons/no_data.svg
 [ns]: Other/Icons/no_support.svg
