@@ -47,15 +47,15 @@ This PortableApp project is in early beta stage.
 ### Install via the PortableApps.com Platform
 
 After downloading the `.paf.exe` installer navigate to your PortableApps.com Platform
-`Apps` Menu &#10102; and select `Install a new app (paf.exe)` &#10103;. 
+`Apps` Menu &#10102; and select `Install a new app (paf.exe)` &#10103;.
 
 <img src="Other/Images/install_newapp_menu.png" width="400">
 
-From the dialog choose the previously downloaded `.paf.exe` file. &#10104; 
+From the dialog choose the previously downloaded `.paf.exe` file. &#10104;
 
 <img src="Other/Images/install_newapp_dialog.png" width="400">
 
-After a short while the installation dialog will appear. 
+After a short while the installation dialog will appear.
 
 <img src="Other/Images/install_newapp_installation.png" width="400">
 
@@ -82,7 +82,30 @@ To unblock the installer and install the application follow the annotated screen
 <!-- Start include BUILD.md -->
 ### Build
 
-#### Windows 10
+#### Preparation 
+
+##### Install build infra
+
+Note: When building with docker this steps is not required. 
+
+```
+git clone https://github.com/uroesch/PortableApps.comInstaller.git
+git clone -b patched https://github.com/uroesch/PortableApps.comLauncher.git
+```
+
+##### Clone repository
+
+```
+git clone https://github.com/uroesch/LdapAdminPortable.git
+cd LdapAdminPortable
+```
+
+#### Windows 
+
+##### Windows 10
+
+The only supported build platform for Windows is version 10 other releases
+have not been tested.
 
 To build the installer run the following command in the root of the git
 repository.
@@ -91,9 +114,11 @@ repository.
 powershell -ExecutionPolicy ByPass -File Other/Update/Update.ps1
 ```
 
-#### Linux (Docker)
+#### Linux
 
-Note: This is currently the preferred way of building.
+##### Docker
+
+Note: This is currently the preferred way of building the PortableApps installer.
 
 For a Docker build run the following command.
 
@@ -101,9 +126,9 @@ For a Docker build run the following command.
 curl -sJL https://raw.githubusercontent.com/uroesch/PortableApps/master/scripts/docker-build.sh | bash
 ```
 
-#### Linux (Wine)
+#### Local build
 
-To build the installer under Linux with Wine and PowerShell installed run the
+To build the installer under Linux with `Wine` and `PowerShell` installed run the
 command below.
 
 ```
