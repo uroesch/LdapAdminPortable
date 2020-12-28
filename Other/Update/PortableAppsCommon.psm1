@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.7.1
+# Version: 0.7.2
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -187,9 +187,8 @@ Function Download-Checksum() {
     [String] $Uri
   )
   Try {
-    $OutFile = Join-Path $DownloadDir ($Uri.split('/'))[-1]
-    Invoke-WebRequest -Uri $Uri -OutFile $OutFile
-    $Sum = Get-Content -Path $OutFile
+    $Sum = (Invoke-WebRequest -Uri $Uri -OutFile $OutFile).Content
+    $Sum = $Sum.Trim() -replace "([A-Fa-f0-9]{32,}).*", "`$1"
     Debug debug "Downloaded checksum: $Sum"
     Return $Sum
   }
