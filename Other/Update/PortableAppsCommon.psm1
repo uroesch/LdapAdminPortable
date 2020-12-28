@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.7.2
+# Version: 0.7.3
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -175,9 +175,10 @@ Function Debug() {
     'FATAL' { $Color = 'Red';        break }
     default { $Color = 'White';      break }
   }
-  If (-Not($Debug)) { return }
+  If (!($Debug)) { return }
   Write-Host "$(Get-Date -Format u) - " -NoNewline
   Write-Host $Severity": " -NoNewline -ForegroundColor $Color
+  Write-Host "$AppName - " -NoNewline
   Write-Host $Message.Replace($(Switch-Path "$AppRoot\"), '')
 }
 
