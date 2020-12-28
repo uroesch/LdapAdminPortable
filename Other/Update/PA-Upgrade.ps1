@@ -11,7 +11,7 @@ Using module ".\PortableAppsCommon.psm1"
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version    = "0.0.4-alpha"
+$Version    = "0.0.7-alpha"
 $Debug      = $True
 $RestUrl    = "https://api.github.com/repos/uroesch/{0}/releases" -f $AppName
 
@@ -27,7 +27,7 @@ Function Fetch-InstalledVersion() {
   }
   Catch {
     Debug error "Failed to parse version $AppInfoIni file"
-    exit 120
+    Return '0.0.0'
   }
 }
 
@@ -50,7 +50,7 @@ Function Fetch-LatestRelease() {
     (Invoke-RestMethod -Uri $RestUrl)[0]
   }
   Catch {
-    Debug error "Failed to fetch latest release of $AppName"
+    Debug error "Failed to fetch latest release of '$AppName'"
     exit 122
   }
 }
@@ -60,14 +60,14 @@ Function Fetch-InstallerLink() {
   Debug info "Fetching installer download URL '$RestUrl'"
   Try {
     (Fetch-LatestRelease).assets | ForEach-Object {
-      If ($_.name -Match "$AppName.*.paf.exe") {
+      If ($_.name -Match "$AppName.*.paf.exe$") {
         Debug info "Download link is $($_.browser_download_url)"
         Return $_.browser_download_url
       }
     }
   }
   Catch {
-    Debug error "Failed to download and parse release information for $AppName"
+    Debug error "Failed to download and parse release information"
     Exit 123
   }
 }
@@ -83,7 +83,7 @@ Function Download-Release {
   }
 
   If (Test-Path $InstallerFile) {
-    Debug info "File '$InstallerFile' is already present; Skip download"
+    Debug info "File '$InstallerFile' is already present; Skipping"
     Return $InstallerFile
   }
 
@@ -91,7 +91,8 @@ Function Download-Release {
   Try {
     Invoke-WebRequest `
       -Uri $InstallerLink `
-      -OutFile $InstallerFile | Out-Null
+      -OutFile "$InstallerFile.part" | Out-Null
+    Move-Item "$InstallerFile.part" $InstallerFile
   }
   Catch {
     Debug error "Failed to download '$InstallerLink'"
