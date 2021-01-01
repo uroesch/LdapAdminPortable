@@ -88,24 +88,6 @@ To unblock the installer and install the application follow the annotated screen
 <!-- Start include BUILD.md -->
 ### Build
 
-#### Preparation 
-
-##### Install build infra
-
-Note: When building with docker this steps is not required. 
-
-```
-git clone https://github.com/uroesch/PortableApps.comInstaller.git
-git clone -b patched https://github.com/uroesch/PortableApps.comLauncher.git
-```
-
-##### Clone repository
-
-```
-git clone https://github.com/uroesch/LdapAdminPortable.git
-cd LdapAdminPortable
-```
-
 #### Windows 
 
 ##### Windows 10
@@ -113,10 +95,18 @@ cd LdapAdminPortable
 The only supported build platform for Windows is version 10 other releases
 have not been tested.
 
-To build the installer run the following command in the root of the git
-repository.
+###### Clone repositories
 
 ```
+git clone https://github.com/uroesch/PortableApps.comInstaller.git
+git clone -b patched https://github.com/uroesch/PortableApps.comLauncher.git
+git clone https://github.com/uroesch/LdapAdminPortable.git
+```
+
+###### Build installer
+
+```
+cd LdapAdminPortable
 powershell -ExecutionPolicy ByPass -File Other/Update/Update.ps1
 ```
 
@@ -128,16 +118,89 @@ Note: This is currently the preferred way of building the PortableApps installer
 
 For a Docker build run the following command.
 
+###### Clone repo
+
 ```
+git clone https://github.com/uroesch/LdapAdminPortable.git
+```
+
+###### Build installer
+
+```
+cd LdapAdminPortable
 curl -sJL https://raw.githubusercontent.com/uroesch/PortableApps/master/scripts/docker-build.sh | bash
 ```
 
 #### Local build
 
-To build the installer under Linux with `Wine` and `PowerShell` installed run the
-command below.
+##### Ubuntu 20.04
+
+To build the installer under Ubuntu 20.04 `Wine`, `PowerShell`, `7-Zip` and when building headless
+`Xvfb` are required. 
+
+###### Setup
+```
+sudo snap install powershell --classic
+sudo apt --yes install git wine p7zip-full xvfb
+```
+
+When building headless run the below command starts a virtual Xserver required for the build to
+succeed.
 
 ```
+export DISPLAY=:7777
+Xvfb ${DISPLAY} -ac &
+```
+
+###### Clone repositories
+
+```
+git clone https://github.com/uroesch/PortableApps.comInstaller.git
+git clone -b patched https://github.com/uroesch/PortableApps.comLauncher.git
+git clone https://github.com/uroesch/LdapAdminPortable.git
+```
+
+###### Build installer
+
+```
+cd LdapAdminPortable
+pwsh Other/Update/Update.ps1
+```
+
+##### Ubuntu 18.04
+
+To build the installer under Ubuntu 18.04 `Wine`, `PowerShell`, `7-Zip` and when building headless
+`Xvfb` are required. 
+
+###### Setup
+```
+sudo snap install powershell --classic
+sudo apt --yes install git p7zip-full xvfb
+sudo dpkg --add-architecture i386
+sudo apt update
+sudo apt --yes install wine32
+```
+
+When building headless run the below command starts a virtual Xserver required for the build to
+succeed.
+
+```
+export DISPLAY=:7777
+Xvfb ${DISPLAY} -ac &
+```
+
+###### Clone repositories
+
+```
+git clone https://github.com/uroesch/PortableApps.comInstaller.git
+git clone -b patched https://github.com/uroesch/PortableApps.comLauncher.git
+git clone https://github.com/uroesch/LdapAdminPortable.git
+```
+
+###### Build installer
+
+```
+cd LdapAdminPortable
 pwsh Other/Update/Update.ps1
 ```
 <!-- End include BUILD.md -->
