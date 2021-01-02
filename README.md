@@ -5,7 +5,7 @@
 
 # LDAP Admin Portable for PortableApps.com
 
-<!-- img src="App/AppInfo/appicon_128.png" align=left -->
+<img src="App/AppInfo/appicon_128.png" align=left>
 
 [Ldap Admin](http://www.ldapadmin.org/) is a free Windows LDAP client and 
 administration tool for LDAP directory management. This application lets 
@@ -34,11 +34,7 @@ software distributed under the GNU General Public License.
 Legend: ![ns][ns] not supported;  ![nd][nd] no data; ![ps][ps] supported but not verified; ![fs][fs] verified;`
 
 ## Status 
-This PortableApp project is in early beta stage. 
-
-## Todo
-- [x] Documentation
-- [ ] Icons
+This PortableApps project has been tested when installed locally and on a cloud drive (Box).
 
 
 <!-- Start include INSTALL.md -->
