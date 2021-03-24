@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.7.3
+# Version: 0.8.0
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -188,10 +188,16 @@ Function Download-Checksum() {
     [String] $Uri
   )
   Try {
-    $Sum = (Invoke-WebRequest -Uri $Uri -OutFile $OutFile).Content
-    $Sum = $Sum.Trim() -replace "([A-Fa-f0-9]{32,}).*", "`$1"
-    Debug debug "Downloaded checksum: $Sum"
-    Return $Sum
+    $Pattern = "[A-Fa-f0-9]{32,}"
+    $Result  = (Invoke-WebRequest -Uri $Uri -OutFile $OutFile).Content
+    Foreach ($Sum in $Result.Split("`n")) {
+      # remove all the spaces, I'm looking at you ApacheDirStudio :)
+      $Sum = $Sum.Trim() -replace "\s+", ""
+      If ($Sum -NotMatch $Pattern) { Continue }
+      $Sum = $Sum.Trim() -replace "($Pattern).*", "`$1"
+      Debug debug "Downloaded checksum: $Sum"
+      Return $Sum
+    }
   }
   Catch {
     Debug error "Unable to download checksum from URL '$Uri'"
