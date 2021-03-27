@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.8.0
+# Version: 0.9.2
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -185,18 +185,37 @@ Function Debug() {
 # -----------------------------------------------------------------------------
 Function Download-Checksum() {
   Param(
-    [String] $Uri
+    [String] $Uri,
+    [String] $File
   )
   Try {
     $Pattern = "[A-Fa-f0-9]{32,}"
-    $Result  = (Invoke-WebRequest -Uri $Uri -OutFile $OutFile).Content
-    Foreach ($Sum in $Result.Split("`n")) {
-      # remove all the spaces, I'm looking at you ApacheDirStudio :)
-      $Sum = $Sum.Trim() -replace "\s+", ""
-      If ($Sum -NotMatch $Pattern) { Continue }
-      $Sum = $Sum.Trim() -replace "($Pattern).*", "`$1"
-      Debug debug "Downloaded checksum: $Sum"
-      Return $Sum
+    $OutFile = Join-Path $DownloadDir ($Uri.Split("/"))[-1]
+    Debug debug "Downloading checksum file from $Uri"
+    Invoke-WebRequest -Uri $Uri -OutFile $OutFile
+    Foreach ($Line in (Get-Content -Path $OutFile)) {
+      $Line = $Line.Trim()
+      Switch -regex ($Line) {
+        "^[A-Fa-f0-9 ]{32,}$" {
+          # Apache Directory Studio
+          Return $Line -replace "\s+", "" 
+        }
+        "^$Pattern$" {
+          # Single line file with checksum only
+          Return $Line
+        } 
+        "^$File\s+$Pattern$" {
+          # Multiline file with file name prefix
+          Return $Line -replace "$File\s+($Pattern)", "`$1"
+        }
+        "^$Pattern\s+\*?$File$" {
+          # Multiline file with file name suffix
+          Return $Line -replace "^($Pattern)\s+\*?$File", "`$1"
+        }
+        default {
+          Debug debug "No match in line '$Line'"
+        }
+      }
     }
   }
   Catch {
@@ -218,7 +237,7 @@ Function Compare-Checksum {
   # The somewhat involved split is here to make it compatible with win10
   ($Algorithm, $Sum) = ($Checksum -replace '::', "`n").Split("`n")
   If ($Sum -like 'http*') {
-    $Sum = Download-Checksum -Uri $Sum
+    $Sum = Download-Checksum -Uri $Sum -File (Get-Item $Path).Name
     $Checksum = $Algorithm + "::" + $Sum
     Debug debug "Checksum from download: $Checksum"
   }

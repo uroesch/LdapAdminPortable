@@ -9,11 +9,12 @@ Using module ".\PortableAppsCommon.psm1"
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version      = "0.0.1-alpha"
+$Version      = "0.0.2-alpha"
 $Debug        = $True
 $Files        = @(
   (Join-Path $AppRoot help.html)
   (Join-Path $AppRoot README.md)
+  (Join-Path $AppRoot LICENSE)
   $AppInfoIni
   $UpdateIni
 )
@@ -41,6 +42,10 @@ $Placeholders = @{
   }
   UpstreamDescription = @{
     Message = 'App description e.g. "Best app ever..."'
+    Value   = ''
+  }
+  UpstreamLicense = @{
+    Message = 'Upstream license e.g. "GPL2", "MIT", "BSD"...'
     Value   = ''
   }
   Category = @{
