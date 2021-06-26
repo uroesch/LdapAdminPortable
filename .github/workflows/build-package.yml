@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.8.0
+# Version: 0.9.0
 # -----------------------------------------------------------------------------
 name: build-package
 
@@ -26,50 +26,13 @@ jobs:
         - ubuntu-latest
         - windows-latest
     env:
-      DISPLAY: ':7777'
       PA_DOWNLOAD: https://sourceforge.net/projects/portableapps/files/PortableApps.com%%20%s/%s/download
       PA_INSTALLER: 3.5.18
       PA_LAUNCHER: 2.2.2
 
     steps:
-    - name: Cache apt directory cache
-      if: runner.os == 'Linux'
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-apt-pkgs
-      with:
-        path: /var/cache/apt/archive
-        key: build-package-${{ env.cache-name }}-${{ hashFiles('*.deb') }}
-
-    - name: Install Wine ~ hick ~
-      if: runner.os == 'Linux'
-      shell: bash
-      run: |2+
-        case $(lsb_release --short --release) in
-        20.04)
-          sudo apt-get -y install wine
-          ;;
-        18.04)
-          sudo dpkg --add-architecture i386 &&
-          sudo apt-get update &&
-          sudo apt-get -y install wine32
-          ;;
-        esac
-
-    - name: Install Virtual Frame Buffer
-      if: runner.os == 'Linux'
-      shell: bash
-      run: sudo apt-get -y install xvfb
-
-    - name: Cache PortableApps Infrastructure
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-pa-infra
-      with:
-        path: ~/downloads
-        key: build-package-${{ env.cache-name }}-${{ hashFiles('PortableApps.com*.paf.exe') }}
-
     - name: Download and install PortableApps.comInstaller
+      if: runner.os == 'Windows'
       shell: bash
       run: |
         name=PortableApps.comInstaller_${PA_INSTALLER}.paf.exe
@@ -81,6 +44,7 @@ jobs:
         7z x -y -o../PortableApps.comInstaller ${installer}
 
     - name: Download and install PortableApps.comLauncher
+      if: runner.os == 'Windows'
       shell: bash
       run: |
         name=PortableApps.comInstaller_${PA_INSTALLER}.paf.exe
@@ -97,13 +61,24 @@ jobs:
       with:
         lfs: true
 
-    - name: Start Virtual Frame Buffer
+    - name: Run build script Update.ps1
+      if: runner.os == 'Windows'
+      run: pwsh -ExecutionPolicy ByPass -File Other/Update/Update.ps1
+      timeout-minutes: 10
+
+    - name: Run build script via docker
       if: runner.os == 'Linux'
       shell: bash
-      run: Xvfb ${DISPLAY} -ac &
-
-    - name: Run build script Update.ps1
-      run: pwsh -ExecutionPolicy ByPass -File Other/Update/Update.ps1
+      run: |2+ 
+        docker run \
+          --rm \
+          --tty \
+          --env USER_UID=$(id -u) \
+          --env USER_GID=$(id -g) \
+          --mount type=bind,src=$(cd ../; pwd),target=/PortableApps \
+          --workdir=/PortableApps/$(realpath --relative-to=../  .) \
+          uroesch/pa-wine:latest \
+          /usr/bin/pwsh -ExecutionPolicy ByPass Other/Update/Update.ps1 -InfraDir /pa-build
       timeout-minutes: 10
 
     - name: Collect logs on failure
