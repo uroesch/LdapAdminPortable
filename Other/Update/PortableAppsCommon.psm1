@@ -2,8 +2,13 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.9.2
+# Version: 0.9.3
 # -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Modules
+# -----------------------------------------------------------------------------
+Using Module "./IniConfig.psm1"
 
 # -----------------------------------------------------------------------------
 # Globals
@@ -21,49 +26,6 @@ $InfraDirDefault = $(Convert-Path "$AppRoot\..")
 
 # -----------------------------------------------------------------------------
 # Classes
-# -----------------------------------------------------------------------------
-Class ReadIniConfig {
-  [string] $File
-  [object] $Struct
-  [bool]   $Verbose = $False
-  [bool]   $Parsed  = $False
-
-  ReadIniConfig(
-    [string] $f
-  ) {
-    $This.File = $f
-  }
-
-  [void] Parse() {
-    If ($this.Parsed) { return }
-    $Content  = Get-Content $This.File
-    $Section  = ''
-    $This.Struct = @{}
-    Foreach ($Line in $Content) {
-      Switch -regex ($Line) {
-        "^\s*;" {
-          Continue
-        }
-        "^\s*\[" {
-          $Section = $Line -replace "[\[\]]", ""
-          $This.Struct.Add($Section.Trim(), @{})
-        }
-        ".*=.*" {
-          ($Name, $Value) = $Line.split("=")
-          $This.Struct[$Section] += @{ $Name.Trim() = $Value.Trim() }
-        }
-      }
-    }
-    $This.Parsed = $True
-  }
-
-  [object] Section([string] $Key) {
-    $This.Parse()
-    $Section = @{}
-    Return $This.Struct[$Key]
-  }
-}
-
 # -----------------------------------------------------------------------------
 Class Download {
   [string] $URL
@@ -119,15 +81,6 @@ Class Download {
 
 # -----------------------------------------------------------------------------
 # Function
-# -----------------------------------------------------------------------------
-Function Read-IniFile {
-  param(
-    [string] $IniFile
-  )
-  Return [ReadIniConfig]::new($IniFile)
-}
-
-
 # -----------------------------------------------------------------------------
 Function Test-Unix() {
   ($PSScriptRoot)[0] -eq '/'
