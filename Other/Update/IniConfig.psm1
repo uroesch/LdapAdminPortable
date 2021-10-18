@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Description: Module to read INI files
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.1.0
+# Version: 0.3.0
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -41,22 +41,46 @@ Class IniConfig {
   }
 
   [Object] Section([String] $Key) {
-    $Section = @{}
     Return $This.Struct[$Key]
   }
 
   [Void] Dump() {
     Write-Host $This.FormatIni(4)
   }
+
+  [Void] InsertSection([String] $Section) {
+    $This.InsertSection($Section, [Ordered]@{})
+  }
+
+  [Void] InsertSection([String] $Section, [Object] $Config) {
+    $This.Struct.Insert(0, $Section.Trim(), $Config)
+  }
+
+  [Void] AddSection([String] $Section) {
+    $This.AddSection($Section.Trim(), [Ordered]@{})
+  }
+
+  [Void] AddSection([String] $Section, [Object] $Config) {
+    $This.Struct.Add($Section.Trim(), $Config)
+  }
+
+  [Void] RemoveSection([String] $Section) {
+    $This.Struct.Remove($Section.Trim())
+  }
 }
 
 Class WriteIniConfig : IniConfig {
-  WriteIniConfig(
-    [String] $f,
-    [Object] $c
-  ) {
-    $This.File   = $f
-    $This.Struct = $c
+  WriteIniConfig([String] $f) {
+    $This.Init($f, [Ordered]@{})
+  }
+
+  WriteIniConfig([String] $f, [Object] $s) {
+    $This.Init($f, $s)
+  }
+
+  [Void] Init([String] $File, [Object] $Struct) {
+    $This.File   = $File
+    $This.Struct = $Struct
   }
 
   [Void] Commit() {
@@ -84,7 +108,7 @@ Class ReadIniConfig : IniConfig {
     If ($This.Parsed) { return }
     $Content = Get-Content $This.File
     $Section = ''
-    $This.Struct = @{}
+    $This.Struct = [Ordered]@{}
     Foreach ($Line in $Content) {
       Switch -regex ($Line) {
         "^\s*;" {
@@ -92,7 +116,7 @@ Class ReadIniConfig : IniConfig {
         }
         "^\s*\[" {
           $Section = $Line -replace "[\[\]]", ""
-          $This.Struct.Add($Section.Trim(), @{})
+          $This.AddSection($Section)
         }
         ".*=.*" {
           ($Name, $Value) = $Line.split("=")
@@ -108,6 +132,7 @@ Class ReadIniConfig : IniConfig {
 # -----------------------------------------------------------------------------
 Function Read-IniFile {
   param(
+    [Parameter(Mandatory)]
     [String] $IniFile
   )
   Return [ReadIniConfig]::new($IniFile)
@@ -115,8 +140,9 @@ Function Read-IniFile {
 
 Function Write-IniFile {
   param(
+    [Parameter(Mandatory)]
     [String] $IniFile,
-    [Object] $Struct
+    [Object] $Struct = [Ordered]@{}
   )
   Return [WriteIniConfig]::new($IniFile, $Struct)
 }

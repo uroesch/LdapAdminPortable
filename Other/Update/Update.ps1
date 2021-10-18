@@ -28,6 +28,7 @@
 # Modules
 # -----------------------------------------------------------------------------
 Using module ".\PortableAppsCommon.psm1"
+Using module ".\IniConfig.psm1"
 
 Param(
   [Switch] $UpdateChecksums,
@@ -36,7 +37,7 @@ Param(
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.32-alpha"
+$Version = "0.0.33-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -184,32 +185,12 @@ Function Update-Release {
 }
 
 # -----------------------------------------------------------------------------
-Function Update-Appinfo-Item() {
-  param(
-    [string] $IniFile,
-    [string] $Match,
-    [string] $Replace
-  )
-  $IniFile = $(Switch-Path $IniFile)
-  If (Test-Path $IniFile) {
-    Debug info "Update INI File $IniFile with $Match -> $Replace"
-    $Content = (Get-Content $IniFile)
-    $Content -replace $Match, $Replace | `
-      Out-File -Encoding UTF8 -FilePath $IniFile
-  }
-}
-
-# -----------------------------------------------------------------------------
 Function Update-Appinfo() {
   $Version = $Config.Section("Version")
-  Update-Appinfo-Item `
-    -IniFile $AppInfoIni `
-    -Match '^PackageVersion\s*=.*' `
-    -Replace "PackageVersion=$($Version['Package'])"
-  Update-Appinfo-Item `
-    -IniFile $AppInfoIni `
-    -Match '^DisplayVersion\s*=.*' `
-    -Replace "DisplayVersion=$($Version['Display'])"
+  $AppInfo = Read-IniFile -IniFile $AppInfoIni
+  $AppInfo.Section("Version")["PackageVersion"] = $Version["Package"]
+  $AppInfo.Section("Version")["DisplayVersion"] = $Version["Display"]
+  (Write-IniFile -IniFile $AppInfoIni -Struct $AppInfo.Struct).Commit()
 }
 
 # -----------------------------------------------------------------------------
@@ -217,7 +198,7 @@ Function Update-Application() {
   $Archive = $Config.Section('Archive')
   $Position = 1
   While ($True) {
-    If (-Not ($Archive.ContainsKey("URL$Position"))) {
+    If (-Not ($Archive.Contains("URL$Position"))) {
       Break
     }
     $Download  = [Download]::new(
