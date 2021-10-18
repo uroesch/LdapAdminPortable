@@ -2,13 +2,8 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.9.3
+# Version: 0.9.4
 # -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# Modules
-# -----------------------------------------------------------------------------
-Using Module "./IniConfig.psm1"
 
 # -----------------------------------------------------------------------------
 # Globals
@@ -151,12 +146,12 @@ Function Download-Checksum() {
       Switch -regex ($Line) {
         "^[A-Fa-f0-9 ]{32,}$" {
           # Apache Directory Studio
-          Return $Line -replace "\s+", "" 
+          Return $Line -replace "\s+", ""
         }
         "^$Pattern$" {
           # Single line file with checksum only
           Return $Line
-        } 
+        }
         "^$File\s+$Pattern$" {
           # Multiline file with file name prefix
           Return $Line -replace "$File\s+($Pattern)", "`$1"
@@ -231,7 +226,6 @@ Function Update-Checksum {
 # -----------------------------------------------------------------------------
 # Export
 # -----------------------------------------------------------------------------
-Export-ModuleMember -Function Read-IniFile
 Export-ModuleMember -Function Test-Unix
 Export-ModuleMember -Function ConvertTo-WindowsPath
 Export-ModuleMember -Function Switch-Path
