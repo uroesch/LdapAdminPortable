@@ -7,21 +7,29 @@
 # Modules
 # -----------------------------------------------------------------------------
 Using module ".\PortableAppsCommon.psm1"
+Using module ".\IniConfig.psm1"
+
+# -----------------------------------------------------------------------------
+# Parameters
+# -----------------------------------------------------------------------------
+Param(
+  [Switch] $Force
+)
 
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version    = "0.0.7-alpha"
+$Version    = "0.0.8-alpha"
 $Debug      = $True
 $RestUrl    = "https://api.github.com/repos/uroesch/{0}/releases" -f $AppName
+$Config     = Read-IniFile -IniFile $AppInfoIni
 
 # -----------------------------------------------------------------------------
 # Functions
 # -----------------------------------------------------------------------------
 Function Fetch-InstalledVersion() {
   Try {
-    $Line    = (Get-Content -Path $AppInfoIni | Select-String 'DisplayVersion')
-    $Version = ($Line -split "=")[1]
+    $Version = $Config.Section("Version")["DisplayVersion"]
     If ($Version.Length -eq 0 ) { Throw }
     Return $Version
   }
@@ -109,15 +117,17 @@ Function Invoke-Installer() {
   )
   Set-Location "$AppRoot\.."
   $PARoot    = (Get-Location)
-  $Arguments = "/AUTOCLOSE=true " +
-               "/DESTINATION=""$(ConvertTo-WindowsPath $PARoot)\\"""
+  $Arguments = @(
+    "/AUTOCLOSE=true ",
+    "/DESTINATION=""$(ConvertTo-WindowsPath $PARoot)\\"""
+  )
   #  Addtional Switches for paf.exe
   #  /HIDEINSTALLER=true
   #  /SILENT=true
 
   Switch (Test-Unix) {
     $True   {
-      $Arguments = "$Command $Arguments"
+      $Arguments = "$Command $($Arguments -join " ")"
       $Command   = "wine"
       break
     }
@@ -140,6 +150,30 @@ Function Check-Version {
 }
 
 # -----------------------------------------------------------------------------
+Function Find-RunningApps() {
+  Get-Process | `
+    Where-Object { $_.Path -match [Regex]::Escape($AppRoot) } | `
+    Select-Object -Property Name, Id
+}
+
+# -----------------------------------------------------------------------------
+Function Shutdown-RunningApps() {
+  $Running = Find-RunningApps
+  Debug info $Force
+  If ($Running.Count -gt 0 -and $Force -eq $False) {
+    Debug error "Found running $AppName applications, close them first!"
+    exit 1
+  }
+
+  $Running | ForEach-Object {
+    Debug info "Stopping application $($_.Name) with PID $($_.Id)"
+    Stop-Process -Id $_.Id -ErrorAction SilentlyContinue | Out-Null
+    Sleep 1
+    Stop-Process -Force -Id $_.Id -ErrorAction SilentlyContinue | Out-Null
+  }
+}
+
+# -----------------------------------------------------------------------------
 Function Install-Release() {
   $Installer = Download-Release
   Invoke-Installer -Command $Installer
@@ -149,4 +183,5 @@ Function Install-Release() {
 # Main
 # -----------------------------------------------------------------------------
 Check-Version
+Shutdown-RunningApps
 Install-Release
