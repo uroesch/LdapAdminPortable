@@ -30,7 +30,7 @@ software distributed under the GNU General Public License.
 | Windows 7       | ![fs][fs]          | ![fs][fs]           |  
 | Windows 8       | ![fs][fs]          | ![fs][fs]           |  
 | Windows 10      | ![fs][fs]          | ![fs][fs]           |
-| Windows 11      | ![na][na]          | ![ps][ps]           |
+| Windows 11      | ![na][na]          | ![fs][fs]           |
 
 Legend: ![ns][ns] not supported; ![na][na] not applicable; ![nd][nd] no data; ![ps][ps] supported but not verified; ![fs][fs] verified;
 
