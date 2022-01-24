@@ -37,7 +37,7 @@ Param(
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.33-alpha"
+$Version = "0.0.34-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -156,11 +156,11 @@ Function Update-Release {
     [object] $Download
   )
   Switch -regex ($Download.Basename()) {
-    '\.[Zz][Ii][Pp]$' {
+    '\.zip$' {
       Expand-Download -Download $Download
       break
     }
-    '\.7[Zz]\.[Ee][Xx][Ee]$' {
+    '\.7z.exe$' {
       Expand-7Zip -Download $Download
       break
     }
