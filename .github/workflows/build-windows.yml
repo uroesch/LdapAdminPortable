@@ -1,0 +1,63 @@
+# -----------------------------------------------------------------------------
+# Build workflow for portable apps
+# Author: Urs Roesch https://github.com/uroesch
+# Version: 0.10.0
+# -----------------------------------------------------------------------------
+name: build-windows
+
+on:
+  push:
+    branches:
+    - workflow/*
+  pull_request:
+    branches:
+    - master
+    - main
+
+jobs:
+  build-windows:
+    if: endsWith(github.repository, 'Portable')
+    timeout-minutes: 15
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+        
+    - name: Clone PortableApps.comInstaller
+      uses: actions/checkout@v2
+      with:
+        repository: uroesch/PortableApps.comInstaller
+        ref: master
+        path: PortableApps.comInstaller
+
+    - name: Clone PortableApps.comLauncher
+      uses: actions/checkout@v2
+      with:
+        repository: uroesch/PortableApps.comLauncher
+        ref: patched
+        path: PortableApps.comLauncher
+
+    - name: Move installer and launcher
+      shell: bash
+      run: mv ./PortableApps.com{Installer,Launcher} ../
+
+    - name: Run build script Update.ps1
+      run: pwsh -ExecutionPolicy ByPass -File Other/Update/Update.ps1
+      timeout-minutes: 10
+
+    - name: Collect logs on failure
+      if: failure()
+      shell: bash
+      run: |
+        mkdir ../artifacts
+        cp ../PortableApps.com*/Data/*Log.txt ../artifacts
+
+    - name: Upload artifacts on failure
+      if: failure()
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: logs.zip
+        path: ../artifacts
