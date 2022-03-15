@@ -1,4 +1,5 @@
-[![Build](https://github.com/uroesch/LdapAdminPortable/workflows/build-package/badge.svg)](https://github.com/uroesch/LdapAdminPortable/actions?query=workflow%3Abuild-package)
+[![Build](https://github.com/uroesch/LdapAdminPortable/workflows/build-linux/badge.svg)](https://github.com/uroesch/LdapAdminPortable/actions?query=workflow%3Abuild-linux)
+[![Build](https://github.com/uroesch/LdapAdminPortable/workflows/build-windows/badge.svg)](https://github.com/uroesch/LdapAdminPortable/actions?query=workflow%3Abuild-windows)
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/uroesch/LdapAdminPortable?include_prereleases)](https://github.com/uroesch/LdapAdminPortable/releases)
 [![Runs on](https://img.shields.io/badge/runs%20on-Win64%20%26%20Win32-blue)](#runtime-dependencies)
 ![GitHub All Releases](https://img.shields.io/github/downloads/uroesch/LdapAdminPortable/total?style=flat)
