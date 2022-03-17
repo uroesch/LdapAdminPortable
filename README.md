@@ -8,30 +8,30 @@
 
 <img src="App/AppInfo/appicon_128.png" align=left>
 
-[Ldap Admin](http://www.ldapadmin.org/) is a free Windows LDAP client and 
-administration tool for LDAP directory management. This application lets 
-you browse, search, modify, create and delete objects on LDAP server. It 
-also supports more complex operations such as directory copy and move between 
-remote servers and extends the common edit functions to support specific 
+[Ldap Admin](http://www.ldapadmin.org/) is a free Windows LDAP client and
+administration tool for LDAP directory management. This application lets
+you browse, search, modify, create and delete objects on LDAP server. It
+also supports more complex operations such as directory copy and move between
+remote servers and extends the common edit functions to support specific
 object types (such as groups and accounts).
 
-You can use it to manage Posix groups and accounts, Samba accounts and it 
-even includes support for Postfix MTA. Ldap Admin is free Open Source 
-software distributed under the GNU General Public License. 
+You can use it to manage Posix groups and accounts, Samba accounts and it
+even includes support for Postfix MTA. Ldap Admin is free Open Source
+software distributed under the GNU General Public License.
 
 ## Runtime dependencies
 * 32-bit or 64-bit version of Windows.
 
 ## Support matrix
 
-| OS              | 32-bit             | 64-bit              | 
+| OS              | 32-bit             | 64-bit              |
 |-----------------|:------------------:|:-------------------:|
 | ReactOS 0.4.14\*| ![fs][fs]          | ![na][na]           |
 | ReactOS 0.4.15\*| ![fs][fs]          | ![nd][nd]           |
-| Windows XP      | ![fs][fs]          | ![nd][nd]           | 
-| Windows Vista   | ![fs][fs]          | ![fs][fs]           | 
-| Windows 7       | ![fs][fs]          | ![fs][fs]           |  
-| Windows 8       | ![fs][fs]          | ![fs][fs]           |  
+| Windows XP      | ![fs][fs]          | ![nd][nd]           |
+| Windows Vista   | ![fs][fs]          | ![fs][fs]           |
+| Windows 7       | ![fs][fs]          | ![fs][fs]           |
+| Windows 8       | ![fs][fs]          | ![fs][fs]           |
 | Windows 10      | ![fs][fs]          | ![fs][fs]           |
 | Windows 11      | ![na][na]          | ![fs][fs]           |
 
@@ -39,7 +39,7 @@ Legend: ![ns][ns] not supported; ![na][na] not applicable; ![nd][nd] no data; ![
 
 \*) Starts up but throws error during LDAP query!
 
-## Status 
+## Status
 This PortableApps project has been tested when installed locally and on a cloud drive (Box).
 
 
