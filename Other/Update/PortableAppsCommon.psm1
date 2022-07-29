@@ -2,7 +2,7 @@
 # Description: Common classes and functions for portable apps powershell
 #   scripts
 # Author: Urs Roesch <github@bun.ch>
-# Version: 0.9.4
+# Version: 0.9.5
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -159,6 +159,11 @@ Function Download-Checksum() {
         "^$Pattern\s+\*?$File$" {
           # Multiline file with file name suffix
           Return $Line -replace "^($Pattern)\s+\*?$File", "`$1"
+        }
+        "^$Pattern\s+.+/$File$" {
+          # Multiline file with multiple entries e.g. putty
+          # 2f49ec1e6c35e10c....  w32/putty.zip
+          Return $Line -replace "^($Pattern)\s+.*", "`$1"
         }
         default {
           Debug debug "No match in line '$Line'"
