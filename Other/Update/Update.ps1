@@ -37,7 +37,7 @@ Param(
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version = "0.0.35-alpha"
+$Version = "0.0.36-alpha"
 $Debug   = $True
 
 # -----------------------------------------------------------------------------
@@ -214,10 +214,13 @@ Function Update-Application() {
 }
 
 # -----------------------------------------------------------------------------
-Function Postinstall() {
-  $Postinstall = "$PSScriptRoot\Postinstall.ps1"
-  If (Test-Path $Postinstall) {
-    . $Postinstall
+Function Source-InstallScript() {
+  Param(
+    [String] $Mode
+  )
+  $Script = "$PSScriptRoot\$Mode.ps1"
+  If (Test-Path $Script) {
+    . $Script
   }
 }
 
@@ -325,8 +328,9 @@ Function Invoke-Helper() {
 # Main
 # -----------------------------------------------------------------------------
 $Config = Read-IniFile -IniFile $UpdateIni
+Source-InstallScript Preinstall
 Update-Application
 Update-Appinfo
-Postinstall
+Source-InstallScript Postinstall
 Create-Launcher
 Create-Installer
