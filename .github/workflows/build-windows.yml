@@ -24,8 +24,8 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
-        
+      uses: actions/checkout@v3
+
     - name: Clone PortableApps.comInstaller
       uses: actions/checkout@v2
       with:
@@ -57,7 +57,7 @@ jobs:
 
     - name: Upload artifacts on failure
       if: failure()
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: logs.zip
         path: ../artifacts
