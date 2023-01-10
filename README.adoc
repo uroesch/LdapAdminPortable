@@ -1,0 +1,288 @@
+= {app-name-spaced} for PortableApps.com
+:author: Urs Roesch
+:app-name-spaced: LDAP Admin
+:app-name: LdapAdminPortable
+:git-user: uroesch
+:app-project-url: https://github.com/{git-user}/{app-name}
+:upstream-name: {app-name-spaced}
+:upstream-url: http://www.ldapadmin.org/
+:shields-url: https://img.shields.io/github/v/release/{git-user}/{app-name}
+:icons: font
+:imagesdir: Other/Images
+:no-data: image:../Icons/no_data.svg[]
+:no-support: image:../Icons/no_support.svg[]
+:not-applicable: image:../Icons/not_applicable.svg[]
+:probably-supported: image:../Icons/probably_supported.svg[]
+:full-support: image:../Icons/full_support.svg[]
+ifdef::env-gitlab[]
+:git-base-url: https://gitlab.com/{git-user}
+endif::env-gitlab[]
+ifdef::env-github[]
+:git-base-url: https://github.com/{git-user}
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::env-github[]
+:doctype: book
+
+ifdef::env-github[]
+image:{app-project-url}/workflows/build-linux/badge.svg[
+  title="Linux Build",
+  link={app-project-url}/actions?query=workflow%3Abuild-linux
+]
+image:{app-project-url}/workflows/build-windows/badge.svg[
+  title="Windows Build",
+  link={app-project-url}/actions?query=workflow%3Abuild-windows
+]
+image:{shields-url}?include_prereleases[
+  title="GitHub release (latest by date including pre-releases)",
+  link={app-project-url}/releases
+]
+<<runtime-dependencies,
+  image:https://img.shields.io/badge/runs%20on-Win64%20%26%20Win32-blue[Runs on]>>
+image:https://img.shields.io/github/downloads/{git-user}/{app-name}/total[
+  title="GitHub All Release Downloads"
+]
+endif::env-github[]
+
+ifndef::env-github,env-gitlab[]
+image:../../App/AppInfo/appicon_128.png[float="left"]
+endif::env-github,env-gitlab[]
+
+ifdef::env-github,env-gitlab[]
++++
+<img src="App/AppInfo/appicon_128.png" align="left">
++++
+endif::env-github,env-gitlab[]
+
+{upstream-url}[{app-name-spaced}] is a free Windows LDAP client and
+administration tool for LDAP directory management. This application lets
+you browse, search, modify, create and delete objects on LDAP server. It
+also supports more complex operations such as directory copy and move between
+remote servers and extends the common edit functions to support specific
+object types (such as groups and accounts).
+
+You can use it to manage Posix groups and accounts, Samba accounts and it
+even includes support for Postfix MTA. Ldap Admin is free Open Source
+software distributed under the GNU General Public License.
+
+== Runtime dependencies
+
+* 32-bit or 64-bit version of Windows.
+
+= Support matrix
+
+[cols=",^,^", options=header]
+|===
+| OS              | 32-bit               | 64-bit
+| ReactOS 0.4.14* | {full-support}       | {not-applicable}
+| ReactOS 0.4.15* | {full-support}       | {no-data}
+| Windows XP      | {full-support}       | {no-data}
+| Windows Vista   | {full-support}       | {full-support}
+| Windows 7       | {full-support}       | {full-support}
+| Windows 8       | {full-support}       | {full-support}
+| Windows 10      | {full-support}       | {full-support}
+| Windows 11      | {not-applicable}     | {full-support}
+|===
+
+Legend:
+  {no-support} not supported;
+  {not-applicable} not applicable;
+  {no-data} no data;
+  {probably-supported} supported but not verified;
+  {full-support} verified;
+
+*) Starts up but throws error during LDAP query!
+
+== Status
+
+This PortableApps project has been tested when installed locally and on a cloud drive (Box).
+
+// Start include INSTALL.adoc
+
+== Installation
+
+=== Download
+
+Since this is not an official PortableApp the PortableApps installer must
+be download first. Navigate to https://github.com/uroesch/{app-name}/releases
+for a selection of releases.
+
+=== Install via the PortableApps.com Platform
+
+After downloading the `.paf.exe` installer navigate to your PortableApps.com
+platform `Apps` Menu &#10102; and select `Install a new app (paf.exe)` &#10103;.
+
+
+image:install_newapp_menu.png[width="400"]
+
+From the dialog choose the previously downloaded `.paf.exe` file. &#10104;
+
+image:install_newapp_dialog.png[width="400"]
+
+After a short while the installation dialog will appear.
+
+image:install_newapp_installation.png[width="400"]
+
+
+=== Install outside of the PortableApps.com Platform
+
+The Packages found under the release page are not digitally signed so there the
+installation is a bit involved.
+
+After downloading the `.paf.exe` installer trying to install may result in a
+windows defender warning.
+
+image:info_defender-protected.png[width="260"]
+
+To unblock the installer and install the application follow the annotated
+screenshot below.
+
+image:howto_unblock-file.png[width="600"]
+
+. Right click on the executable file.
+. Choose `Properties` at the bottom of the menu.
+. Check the unblock box.
+
+// End include INSTALL.adoc
+
+// Start include BUILD.adoc
+
+=== Build
+
+==== Windows
+
+===== Windows 10
+
+The only supported build platform for Windows is version 10 other releases
+have not been tested.
+
+====== Clone repositories
+
+[source,console,subs=attributes]
+----
+git clone {git-base-url}/PortableApps.comInstaller.git
+git clone -b patched https://github.com/uroesch/PortableApps.comLauncher.git
+git clone {git-base-url}/{app-name}.git
+----
+
+====== Build installer
+
+[source,console,subs=attributes]
+----
+cd {app-name}
+powershell -ExecutionPolicy ByPass -File Other/Update/Update.ps1
+----
+
+==== Linux
+
+===== Docker
+
+[NOTE]
+This is currently the preferred way of building the PortableApps installer.
+
+For a Docker build run the following command.
+
+====== Clone repo
+
+[source,console,subs=attributes]
+----
+git clone {git-base-url}/{app-name}.git
+----
+
+====== Build installer
+
+[source,console,subs=attributes]
+----
+cd {app-name}
+curl -sJL https://raw.githubusercontent.com/uroesch/PortableApps/master/scripts/docker-build.sh | bash
+----
+
+==== Local build
+
+===== Ubuntu 20.04
+
+To build the installer under Ubuntu 20.04 `Wine`, `PowerShell`, `7-Zip` and
+when building headless `Xvfb` are required.
+
+====== Setup
+
+[source,console]
+----
+sudo snap install powershell --classic
+sudo apt --yes install git wine p7zip-full xvfb
+----
+
+When building headless run the below command starts a virtual Xserver required
+for the build to succeed.
+
+[source,console]
+----
+export DISPLAY=:7777
+Xvfb ${DISPLAY} -ac &
+----
+
+====== Clone repositories
+
+[source,console,subs=attributes]
+----
+git clone {git-base-url}/PortableApps.comInstaller.git
+git clone -b patched {git-base-url}/PortableApps.comLauncher.git
+git clone {git-base-url}/{app-name}.git
+----
+
+====== Build installer
+
+[source,console,subs=attributes]
+----
+cd {app-name}
+pwsh Other/Update/Update.ps1
+----
+
+===== Ubuntu 18.04
+
+To build the installer under Ubuntu 18.04 `Wine`, `PowerShell`, `7-Zip` and
+when building headless `Xvfb` are required.
+
+====== Setup
+
+[source,console]
+----
+sudo snap install powershell --classic
+sudo apt --yes install git p7zip-full xvfb
+sudo dpkg --add-architecture i386
+sudo apt update
+sudo apt --yes install wine32
+----
+
+When building headless run the below command starts a virtual Xserver required
+for the build to succeed.
+
+[source,console]
+----
+export DISPLAY=:7777
+Xvfb ${DISPLAY} -ac &
+----
+
+====== Clone repositories
+
+[source,console,subs=attributes]
+----
+git clone {git-base-url}/PortableApps.comInstaller.git
+git clone -b patched {git-base-url}/PortableApps.comLauncher.git
+git clone {git-base-url}/{app-name}.git
+----
+
+====== Build installer
+
+[source,console,subs=attributes]
+----
+cd {app-name}
+pwsh Other/Update/Update.ps1
+----
+
+// End include BUILD.adoc
+
+// vim: set colorcolumn=80 textwidth=80 : #spell spelllang=en_us :
