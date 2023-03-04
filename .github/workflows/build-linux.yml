@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Build workflow for portable apps
 # Author: Urs Roesch https://github.com/uroesch
-# Version: 0.10.0
+# Version: 0.11.0
 # -----------------------------------------------------------------------------
 name: build-linux
 
@@ -19,6 +19,10 @@ jobs:
     if: endsWith(github.repository, 'Portable')
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    container:
+      image: uroesch/pa-wine:latest
+      env:
+        RUN_AS_ROOT: yes
     strategy:
       fail-fast: false
 
@@ -28,28 +32,8 @@ jobs:
 
     - name: Run build script via docker
       shell: bash
-      run: |2+
-        docker run \
-          --rm \
-          --tty \
-          --env USER_UID=$(id -u) \
-          --env USER_GID=$(id -g) \
-          --mount type=bind,src=$(cd ../; pwd),target=/PortableApps \
-          --workdir=/PortableApps/$(realpath --relative-to=../  .) \
-          uroesch/pa-wine:latest \
-          /usr/bin/pwsh -ExecutionPolicy ByPass Other/Update/Update.ps1 -InfraDir /pa-build
-      timeout-minutes: 10
-
-    - name: Collect logs on failure
-      if: failure()
-      shell: bash
       run: |
-        mkdir ../artifacts
-        cp ../PortableApps.com*/Data/*Log.txt ../artifacts
-
-    - name: Upload artifacts on failure
-      if: failure()
-      uses: actions/upload-artifact@v3
-      with:
-        name: logs.zip
-        path: ../artifacts
+        /entrypoint.sh \
+          /usr/bin/pwsh -ExecutionPolicy ByPass \
+          Other/Update/Update.ps1 -InfraDir /pa-build
+      timeout-minutes: 10
