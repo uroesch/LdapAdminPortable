@@ -1,0 +1,25 @@
+# EditorConfig is awesome: http://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+end_of_line = crlf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+
+[*.{ps1,psm1}]
+end_of_line = crlf
+
+[*.sh]
+end_of_line = lf
+max_line_length = 80
+
+[*.adoc]
+max_line_length = 80
+
+[Makefile]
+indent_style = tab
