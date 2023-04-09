@@ -1,0 +1,47 @@
+# Globals
+text       eol=crlf
+
+# document formats
+*.adoc         text
+*.html         text 
+*.svg          text
+*.txt          text
+*.yml          text
+*.yaml         text
+*.jsn          text
+*.json         text
+*.ini          text
+
+# Git config files
+.gitignore     text
+.gitattributes text
+.editorconfig  text
+
+# Source code formats
+*.sh           text eol=lf
+*.ps1          text eol=crlf
+*.psm1         text eol=crlf
+
+# Images formats
+*.gif          binary
+*.ico          binary
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.webm         binary
+*.avif         binary
+
+# Binary formats
+*.bin          binary
+*.bpm          binary
+*.dll          binary
+*.exe          binary
+*.lib          binary
+*.pat          binary
+bzip2-*        binary
+bzip2_*        binary
+lzma-*         binary
+lzma_*         binary
+uninst         binary
+zlib-*         binary
+zlib_*         binary
